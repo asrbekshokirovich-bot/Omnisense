@@ -7,6 +7,13 @@
 **Document status:** v1 (founding plan). Based on May 2026 market research — see
 [`market-research.md`](./market-research.md) for the sourced competitive landscape.
 
+> **Note:** the business context has since evolved — there is now an existing IT/
+> software company behind this, an investor (~$1M after a successful demo), and a
+> defined business model (hardware at cost + subscription, first 3 months free). The
+> **product and technical strategy below still holds** (software-first, audio-first,
+> on-device, trust-led); for the company/financial/go-to-market view see
+> [`business-plan.md`](./business-plan.md), which is now the primary strategic doc.
+
 **Decisions this plan is built on** (chosen with you up front):
 - **Goal:** prototype-to-learn first (not a funded company yet).
 - **Approach:** **software-first** — prove the idea on hardware you can buy today.
