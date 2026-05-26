@@ -35,13 +35,19 @@ _load_dotenv()
 class Settings:
     # Provider selection: "mock" (offline default) or a real adapter name.
     stt_provider: str = _env("OMNI_STT", "mock")          # mock | yandex
-    embed_provider: str = _env("OMNI_EMBED", "mock")      # mock | openai
+    embed_provider: str = _env("OMNI_EMBED", "mock")      # mock | openai | local
     llm_provider: str = _env("OMNI_LLM", "mock")          # mock | anthropic | openai
     store_backend: str = _env("OMNI_STORE", "memory")     # memory | pgvector
 
+    # Sizes the mock vector and the OpenAI-compatible vector. The `local` provider reports
+    # its own dim from the loaded model (BGE-M3=1024, multilingual-e5-large=1024, etc).
     embedding_dim: int = int(_env("OMNI_EMBED_DIM", "256"))
     default_lang: str = _env("OMNI_DEFAULT_LANG", "ru")
     retrieval_top_k: int = int(_env("OMNI_TOP_K", "5"))
+
+    # Local sentence-transformers embedder (in-country, no cross-border data path).
+    local_embed_model: str = _env("OMNI_LOCAL_EMBED_MODEL", "BAAI/bge-m3")
+    local_embed_device: str = _env("OMNI_LOCAL_EMBED_DEVICE", "cpu")
 
     # Real-provider credentials / endpoints (only used when the matching provider is selected).
     yandex_api_key: str = _env("YANDEX_API_KEY")

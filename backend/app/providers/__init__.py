@@ -16,7 +16,12 @@ def make_stt(s: Settings) -> STTProvider:
 def make_embedding(s: Settings) -> EmbeddingProvider:
     if s.embed_provider == "openai":
         from .llm_openai import OpenAIEmbedding
-        return OpenAIEmbedding(s.openai_api_key, s.openai_base_url, s.openai_embed_model)
+        return OpenAIEmbedding(
+            s.openai_api_key, s.openai_base_url, s.openai_embed_model, s.embedding_dim,
+        )
+    if s.embed_provider == "local":
+        from .embed_local import LocalSentenceTransformerEmbedding
+        return LocalSentenceTransformerEmbedding(s.local_embed_model, s.local_embed_device)
     return HashingEmbedding(s.embedding_dim)
 
 

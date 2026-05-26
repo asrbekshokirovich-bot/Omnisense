@@ -32,15 +32,19 @@ def _tokens(text: str) -> list[str]:
 
 class HashingEmbedding(EmbeddingProvider):
     def __init__(self, dim: int = 256) -> None:
-        self.dim = dim
+        self._dim = dim
+
+    @property
+    def dim(self) -> int:
+        return self._dim
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         out: list[list[float]] = []
         for text in texts:
-            vec = [0.0] * self.dim
+            vec = [0.0] * self._dim
             for tok in _tokens(text):
                 h = int(hashlib.md5(tok.encode("utf-8")).hexdigest(), 16)
-                vec[h % self.dim] += 1.0 if (h >> 8) & 1 else -1.0
+                vec[h % self._dim] += 1.0 if (h >> 8) & 1 else -1.0
             norm = math.sqrt(sum(x * x for x in vec)) or 1.0
             out.append([x / norm for x in vec])
         return out

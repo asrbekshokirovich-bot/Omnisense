@@ -18,7 +18,7 @@ class Pipeline:
         self.stt = make_stt(s)
         self.embed = make_embedding(s)
         self.llm = make_llm(s)
-        self.store = make_store(s)
+        self.store = make_store(s, dim=self.embed.dim)
 
     # ---- ingest -------------------------------------------------------------
     def ingest_audio(self, audio: bytes, lang: str, source: str = "upload") -> Session:

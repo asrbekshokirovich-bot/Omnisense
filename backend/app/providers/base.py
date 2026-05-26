@@ -16,6 +16,15 @@ class EmbeddingProvider(ABC):
     def embed(self, texts: list[str]) -> list[list[float]]:
         """Return one vector per input text."""
 
+    @property
+    @abstractmethod
+    def dim(self) -> int:
+        """The dimensionality of the vectors this provider returns.
+
+        The pgvector schema is sized to this. Mismatching dims across providers in the same
+        database breaks search, so changing the embedder normally means wiping the store.
+        """
+
 
 class LLMProvider(ABC):
     @abstractmethod

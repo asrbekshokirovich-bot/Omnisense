@@ -7,6 +7,9 @@ httpx>=0.27            # used by TestClient and the real provider adapters
 
 # Real providers / production (optional — only needed when enabled via env)
 psycopg[binary]>=3.1  # OMNI_STORE=pgvector
+# OMNI_EMBED=local — kept out of the base install so the offline demo stays light.
+# Install on the team's GPU/CPU box:  pip install sentence-transformers>=3.0
+# (pulls in torch + transformers; ~2 GB once BGE-M3 weights cache).
 
 # Dev / test
 pytest>=8.0

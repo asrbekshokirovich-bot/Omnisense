@@ -47,12 +47,18 @@ def test_yandex_stt_request_and_parse(monkeypatch):
 
 # ---- OpenAI-compatible ---------------------------------------------------
 def test_openai_embedding(monkeypatch):
-    fake, _ = _capture({"data": [{"embedding": [0.1, 0.2]}, {"embedding": [0.3, 0.4]}]})
+    fake, calls = _capture({"data": [{"embedding": [0.1, 0.2]}, {"embedding": [0.3, 0.4]}]})
     monkeypatch.setattr(httpx, "post", fake)
     from app.providers.llm_openai import OpenAIEmbedding
 
-    out = OpenAIEmbedding("k", "https://api.openai.com/v1", "text-embedding-3-small").embed(["a", "b"])
+    emb = OpenAIEmbedding("k", "https://api.openai.com/v1", "text-embedding-3-small", dim=1536)
+    out = emb.embed(["a", "b"])
     assert out == [[0.1, 0.2], [0.3, 0.4]]
+    assert emb.dim == 1536
+    # Self-hostable: the model name is sent verbatim, so a TEI/vLLM box serving
+    # "BAAI/bge-m3" answers the same code path.
+    assert calls["kw"]["json"]["model"] == "text-embedding-3-small"
+    assert calls["kw"]["json"]["input"] == ["a", "b"]
 
 
 def test_openai_llm_answer_and_summary(monkeypatch):

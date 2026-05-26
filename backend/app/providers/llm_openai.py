@@ -35,9 +35,26 @@ class _Client:
 
 
 class OpenAIEmbedding(EmbeddingProvider):
-    def __init__(self, api_key: str, base_url: str, model: str) -> None:
+    """OpenAI-compatible /embeddings endpoint.
+
+    Works with OpenAI, Azure, and self-hosted gateways that speak the same protocol —
+    vLLM, Ollama, and HuggingFace text-embeddings-inference (TEI). For Uzbekistan, point
+    OPENAI_BASE_URL at an in-country TEI/vLLM serving BGE-M3 or multilingual-e5; that keeps
+    the residency split intact.
+
+    `dim` is read from config (OMNI_EMBED_DIM) because different models have different sizes
+    (text-embedding-3-small=1536, BGE-M3=1024, multilingual-e5-large=1024). Set it to match
+    the model you're serving — pgvector schema is sized to it on first init.
+    """
+
+    def __init__(self, api_key: str, base_url: str, model: str, dim: int) -> None:
         self.client = _Client(api_key, base_url)
         self.model = model
+        self._dim = dim
+
+    @property
+    def dim(self) -> int:
+        return self._dim
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         data = self.client._post("/embeddings", {"model": self.model, "input": texts})
