@@ -1,98 +1,87 @@
-# Omnisense — Business Plan
+# Omnisense — Business Plan (Uzbekistan launch)
 
 > **The product:** a wearable + app that acts as your 24/7 "second brain" — it
-> remembers your conversations, meetings, and (later) what you see, and answers
-> anything you ask later.
-> **The business:** sell the hardware **at cost**, make **all** revenue from a
-> **monthly subscription**, and give every new user the **first 3 months free.**
+> remembers your conversations and meetings (later: what you see) and answers anything
+> you ask later, **in Uzbek and Russian.**
+> **The business:** sell the hardware **at cost**, make **all** revenue from a **monthly
+> subscription**, **first 3 months free.**
+> **Launch market:** **Uzbekistan.**
 
-**Status:** v1 business plan, grounded in May 2026 research. Companion docs:
-[`master-plan.md`](./master-plan.md) (product & technical plan) and
-[`market-research.md`](./market-research.md) (sourced competitive landscape). Figures
-are research-backed *planning assumptions*, not commitments; sources are listed in §19.
+**Status:** v2 — localized for Uzbekistan, grounded in May 2026 research. Companion docs:
+[`master-plan.md`](./master-plan.md) (product/tech), [`market-research.md`](./market-research.md)
+(global competitive landscape), [`demo-sprint.md`](./demo-sprint.md) (the 30-day demo plan).
+Figures are research-backed planning assumptions; sources in §20. *Legal content is
+research synthesis, not legal advice — use licensed Uzbek counsel.*
 
-**Context this plan is built on (from you):**
-- You are **not a solo founder** — you run an **existing IT / software outsourcing
-  company**, so you have an engineering team and delivery capacity.
-- You have an **investor** who will **test the first working product himself**; if he
-  likes it, he invests **~$1M (possibly more over time).**
-- **Business model:** hardware sold **at cost** (manufacturing + direct expenses, **no
-  hardware profit**); **100% of income from subscriptions**; **first ~3 months free.**
+**Context (from you):**
+- You run an **existing IT / software company** (team + delivery capacity).
+- An **investor** will **test the first product himself**; if he likes it he invests
+  **~$1M** (possibly more later).
+- Model: hardware **at cost**, **100% subscription revenue**, **first 3 months free**.
+- Confirmed: **~$12/mo-equivalent as the business tier**, **annual prepay + card-on-file
+  trial**, **launch in Uzbekistan**, **~1-month demo**, **cheap audio pendant** first.
 
 ---
 
 ## 1. Executive summary
 
-Omnisense is a personal-memory AI: a small wearable that captures your conversations
-(and later what you see), plus an app that turns them into a private, searchable memory
-and a proactive daily briefing. Ask it *"what did I promise the client?"*, *"where did I
-leave my keys?"*, or *"how did I fix this last time?"*
+Omnisense is a personal-memory AI for Uzbekistan: a cheap wearable that captures your
+conversations and an app that turns them into a private, searchable memory and a daily
+briefing — working in **Uzbek and Russian.** Ask it *"what did we agree with the
+client?"* and get the answer with the exact quote.
 
-**The market is validated and the model is proven.** The AI-note/meeting-memory
-category we're entering is growing **~20–26%/year**; broader wearable-AI is a **~$54B
-market growing ~16%/year** to ~$112B by 2030. More importantly, our exact business model
-— **hardware + subscription** — already built **Oura (~$11B valuation)** and **Whoop
-(~$10.1B, ~$1.1B revenue, cash-flow positive)**, and **PLAUD bootstrapped to ~$180–250M
-ARR** selling an AI voice recorder. In 2025, **Meta acquired Limitless and Amazon
-acquired Bee** — validating demand *and* signaling the threat: incumbents will
-commoditize basic audio memory.
+**The model is proven and the market is open.** Hardware + subscription already built
+**Oura (~$11B)** and **Whoop (~$10.1B, ~$1.1B revenue)**; **PLAUD** bootstrapped to
+~$180–250M ARR selling an AI recorder. Yet **no one has localized this for Uzbekistan** —
+a young country of **37M** (median age 27), **~30M smartphone users**, **89% internet
+penetration**, and almost no local-language competitor. Meta/Amazon (who just bought
+Limitless and Bee) won't build for Uzbek any time soon.
 
-**Our wedge is the one thing Big Tech structurally can't offer: trust** — a
-privacy-first, **on-device, "your memories stay yours"** product. This isn't just
-positioning; it's also our margin engine. By transcribing audio **on the phone** instead
-of the cloud, we cut serving cost from **~$12–20/user/mo to ~$0.50–4** — the difference
-between negative and **70–95% gross margins.** The same choice protects privacy *and*
-makes a low subscription price profitable.
+**Our moat is forced by the local constraints — and that's the good news.** Budget
+Android phones dominate (so on-device AI is unreliable), **Uzbek is a low-resource
+language** that needs a fine-tuned model, and the **data law requires biometric voice
+data to stay in Uzbekistan.** The single answer to all three: **self-host a fine-tuned
+Uzbek/Russian speech model on servers in Tashkent.** That (a) controls cost at scale,
+(b) is privacy-law-compliant by design, and (c) gives us **Uzbek transcription quality
+Big Tech won't match** — the defensible edge.
 
-**The business model:** sell hardware **at cost** to remove the adoption barrier and
-reach scale, then earn durable, high-margin **subscription** revenue. The first 3 months
-are free to build the daily habit before we charge. We'll **bill annually upfront**
-(the Whoop playbook) to beat the category's brutal churn.
+**Economics.** Pricing is localized: a **business/prosumer tier at ~$10–16/seat**
+(profitable from day one on cloud transcription) leads, with a **~$2/mo mass tier** that
+turns on once self-hosted transcription drops the cost. **IT Park residency** (0% profit/
+VAT/social tax, 7.5% payroll) makes our burn tiny, so ~$1M goes very far.
 
-**The plan / the ask:** Using our existing software company, we build a polished,
-genuinely useful **demo** for the investor in ~8–12 weeks (lean — off-the-shelf hardware
-+ great software, no custom tooling yet). On his commitment of **~$1M**, we fund a
-~18-month plan to ship real hardware (a first batch costs only ~$80–250k), launch
-publicly, and prove the **retention + free-to-paid conversion** that unlock a larger
-round or profitability.
-
-**Why we can win:** an existing engineering team (far lower burn than a typical
-startup), a committed first investor, a trust-led position against Big Tech, and an
-edge-first architecture that is simultaneously our privacy story and our margin story.
+**The plan / ask.** Our existing team builds a working demo in **~1 month** (off-the-
+shelf pendant + great software, in Russian/Uzbek). The investor uses it for real; on his
+**~$1M**, we fund Uzbek-language R&D, in-country infrastructure, the first hardware batch
+(~$80–250k), local payments, and a private beta — proving the **conversion + retention**
+that unlock the next round.
 
 ---
 
 ## 2. The company & why us (unfair advantages)
 
-This is **not** a solo founder learning to code. The venture launches from an operating
-**IT / outsourcing company**:
+Not a solo founder — the venture launches from an operating **IT company**:
+- **Engineering capacity on day one** (app, backend, AI pipeline) — no hiring from zero.
+- **Very low burn** — Uzbek salaries + **IT Park 0% tax** mean ~$1M funds far more than
+  it would anywhere else. A real cost moat.
+- **Delivery discipline** — a services company ships to deadlines (exactly what a
+  1-month demo needs).
+- **A committed first investor** — most startups die finding their first check; we start
+  with one who will *test the product himself.*
 
-- **Engineering capacity on day one** — build the app, backend, and AI pipeline with our
-  own team instead of hiring from zero.
-- **Lower burn / longer runway** — outsourcing-company economics mean ~$1M funds far
-  more engineer-months than for a Bay-Area startup. A real cost moat.
-- **Delivery discipline** — a services company already ships to deadlines, exactly what
-  an investor demo needs.
-- **A committed first investor** — most startups die looking for their first check; we
-  start with one who will *test the product himself.*
-
-**The one gap to close:** consumer hardware + a consumer subscription is a different
-muscle than B2B services. We mitigate by **starting software-first**, using **off-the-
-shelf/open hardware** for the demo, and hiring hardware/consumer-growth expertise only
-**after** funding.
+Gap to close: consumer hardware + consumer subscription is a new muscle → mitigate by
+**software-first**, off-the-shelf hardware for the demo, hardware/growth hires post-raise.
 
 ---
 
 ## 3. Problem & solution
 
-**Problem.** People forget almost everything — decisions, commitments, where they put
-things, how they did something. We scatter notes, screenshots, and recordings across a
-dozen apps and still can't find anything. Existing AI recorders help a little but are
-clunky, weak at "who said what," and increasingly owned by Big Tech that profits from
-your data.
+**Problem.** People forget decisions, commitments, and details. Notes and recordings
+scatter across apps. Existing AI recorders are clunky, weak at "who said what," **don't
+speak Uzbek**, and are owned by Big Tech that profits from your data.
 
-**Solution.** Omnisense remembers *for* you, automatically, and lets you ask in plain
-language. Four use cases, shipped in order of value and feasibility:
+**Solution.** Omnisense remembers *for* you and answers in plain Uzbek/Russian. Four use
+cases, in order of value and feasibility:
 
 | # | Pillar | Example | Phase |
 |---|--------|---------|-------|
@@ -101,285 +90,212 @@ language. Four use cases, shipped in order of value and feasibility:
 | 3 | Find-my-things | "Where did I last see my keys?" | Phase 2 (camera) |
 | 4 | Show-me-how | "How did I do this last time?" | Phase 3 (camera) |
 
-Technical detail lives in [`master-plan.md`](./master-plan.md). This plan's job is to
-show why this is a fundable, profitable company.
+Technical detail in [`master-plan.md`](./master-plan.md).
 
 ---
 
-## 4. Product strategy (what we ship, and when)
+## 4. Product strategy
 
-- **Software-first, audio-first.** The first product is conversation memory — the proven
-  sticky use case (it made PLAUD #1). It's cheap to run, the least legally fraught, and
-  the place every competitor is weak (speaker identification = our quality edge). Vision
-  comes after funding.
-- **The entry device is deliberately cheap and simple** — a pendant/clip-class audio
-  wearable. Because we sell at cost, a **low-BOM device = a low price = mass adoption**,
-  which is the whole point of the model. Premium **glasses** (camera, the full vision
-  experience) come as a **later, higher tier**, not the entry product.
-- **For the investor demo, do NOT build custom hardware.** Use an **off-the-shelf or
-  open-source device** (the open Omi pendant, or a clean phone-+-mic setup) so 100% of
-  pre-funding effort goes into making the **software undeniable.** Tooling and
-  certification are funded *after* the investor commits.
+- **Software-first, audio-first.** First product = conversation memory (the proven sticky
+  use case; PLAUD's wedge). Cheap to run, least legally fraught, and where competitors are
+  weakest (speaker ID). Vision comes after funding.
+- **Cheap audio pendant first; glasses later.** Sold at cost, a low-BOM pendant
+  (BOM ~$30–45 at low volume) = a low price = adoption. Glasses are a later premium tier.
+- **For the demo, no custom hardware** — off-the-shelf/open pendant or phone + clip mic,
+  so all effort goes into the software (see [`demo-sprint.md`](./demo-sprint.md)).
+- **Bilingual from day one** — Russian works out of the box; **Uzbek is the moat** (§9).
 
 ---
 
 ## 5. Market opportunity
 
-**The category is validated and growing fast** (sources in §19):
+**Uzbekistan (launch market):**
+- **37.1M people, median age 27**, ~half urban; GDP/capita ~$3,180; **~12,100 som = $1**.
+- **~30M smartphone users, 89% internet penetration; Telegram reaches ~76%** (25M users);
+  Russian used by ~18.5% (urban/Tashkent/business), Uzbek by the majority.
+- **TAM** ~28–30M smartphone users · **SAM** ~4–6M urban professionals/students/SMEs ·
+  **SOM** ~15,000–50,000 subscribers in 12–24 months (stretch ~100k). At ~$2/mo, 30k subs
+  ≈ **~$720k ARR**; the business tier lifts ARPU well above that.
+- **Almost no localized competitor** — first-mover advantage in Uzbek.
 
-- **Wearable AI:** ~**$53.7B (2025) → ~$112.3B (2030), ~16% CAGR** (Research and
-  Markets); analysts cluster at ~16–18%.
-- **Smart glasses (the hot adjacency):** ~$1.22B (2025) → ~$4.13B (2030), **~29% CAGR**;
-  shipments grew **+110% YoY in H1 2025** with Meta holding >70% share (Counterpoint).
-- **AI note-takers / meeting memory (our actual category):** ~$2.8B (2025) → ~$14.6B
-  (2034), **~20% CAGR**; the meeting-assistant sub-segment compounds even faster at
-  **~25.6% CAGR.** This is growing faster than wearables broadly.
-
-**The model itself is proven — it built ~$10B companies:**
+**The model is proven globally (the comparable that convinces an investor):**
 
 | Company | Model | Scale (2025, est.) | Valuation |
 |---|---|---|---|
-| **Oura** | Ring + ~$6/mo sub | 5.5M+ rings, ~$1B rev, ~2M paying subs | **~$11B** |
-| **Whoop** | Hardware-bundled, subscription-led | ~$1.1B rev (+103% YoY), 2.5M+ members, cash-flow positive | **~$10.1B** |
-| **PLAUD** | AI recorder + subscription | ~$180–250M ARR, 1M+ units | ~$2B *(single-source)* |
-| **Otter.ai** | AI meeting notes (SaaS) | ~$100M ARR, 35M+ users | — |
+| **Oura** | Ring + ~$6/mo | 5.5M+ rings, ~$1B rev, ~2M subs | **~$11B** |
+| **Whoop** | Subscription-led, hardware bundled | ~$1.1B rev, 2.5M+ members | **~$10.1B** |
+| **PLAUD** | AI recorder + subscription | ~$180–250M ARR, 1M+ units | ~$2B |
 
-**Our beachhead (SOM).** Don't boil the ocean. Start with the audience PLAUD proved will
-pay: **meeting-heavy knowledge workers** — founders, consultants, sales, students,
-journalists. Land there, then expand to the broader "remember my life" consumer market
-with the cheaper device and the vision features.
+**Category growth (global):** wearable-AI ~16% CAGR; AI meeting-memory ~20–26% CAGR.
 
 ---
 
-## 6. Competitive landscape & differentiation
+## 6. Competition & differentiation
 
-Full detail in [`market-research.md`](./market-research.md). Short version:
+Detail in [`market-research.md`](./market-research.md). **Graveyard:** Humane Pin
+(bricked, sold for ~$116M), Rabbit R1, Friend (backlash). **Survivors/threats:** Meta
+Ray-Ban (~7M), PLAUD (~1M), Limitless→Meta, Bee→Amazon.
 
-**The graveyard:** Humane AI Pin (tried to replace the phone; bricked; assets sold for
-~$116M), Rabbit R1 ("$199 toy that fails at almost everything"), Friend (always-on
-"companion"; public backlash).
+**Our four wedges (Uzbekistan-sharpened):**
+1. **Uzbek-language quality** — a fine-tuned, in-country model nobody else offers.
+2. **Trust / data residency** — voice data stays in Uzbekistan, encrypted, you hold keys.
+3. **Local price & payments** — at-cost device + a ~$2 tier + Payme/Click/BNPL.
+4. **Focus** — one beloved use case (conversation memory) done well.
 
-**The survivors / threats:** Meta Ray-Ban (~7M units), PLAUD (~1M, audio leader),
-**Limitless→Meta**, **Bee→Amazon**.
-
-**Our differentiation (four wedges):**
-1. **Trust / privacy-first.** Local-first, on-device processing, encrypted, *you hold
-   the keys.* The credible thing a small independent can say that Meta/Amazon cannot.
-2. **"Who said what" done right.** Best-in-class speaker identification — the universal
-   weak point of every competitor.
-3. **Price / access.** Hardware at cost → the lowest barrier to entry in the category.
-4. **Focus.** One beloved use case done better than a does-everything incumbent.
-
-> **Honest risk:** Amazon and Meta can *also* subsidize hardware and have huge
-> distribution. We do **not** win on price alone — price gets us in the door; **trust +
-> product quality + retention** is what keeps us alive.
+> Big Tech can out-spend us globally but **won't localize for Uzbek** soon. That window
+> is the opportunity.
 
 ---
 
 ## 7. Business model — hardware at cost, revenue from subscription
 
-A **razor-and-blades / "membership"** model, validated by Oura and Whoop:
+A razor-and-blades / membership model (validated by Oura & Whoop):
+- **Hardware = acquisition, not profit** (priced at manufacturing + expenses).
+- **Subscription = the entire business** (high margin once transcription is in-country).
+- **First 3 months free** to build the habit — so **free→paid conversion is the #1 metric.**
 
-- **Hardware = customer acquisition, not profit.** We price the device at
-  **manufacturing + direct expenses** (≈ break-even; pendant BOM is only ~$30–45 at low
-  volume, falling to ~$18–28 at scale). The device exists to get the app onto someone's
-  body and start the memory habit.
-- **Subscription = the entire business.** All margin comes from a recurring fee for the
-  AI memory service.
-- **First ~3 months free**, then convert to paid. This lifts activation but **delays
-  revenue and adds serving cost during the free window**, so **free-to-paid conversion
-  is the single most important metric.**
-
-**Two design choices the research makes mandatory:**
-
-1. **Bill annually, upfront (the Whoop playbook).** The category's churn is brutal (see
-   §9). Whoop blunts it by collecting a year in advance, which front-loads cash and locks
-   users past the high-churn early months. We should **push an annual prepay** (with a
-   monthly option) — ideally the **at-cost device is tied to an annual commitment.**
-2. **Be radically transparent that the device is at-cost and the value is the
-   subscription.** When **Oura** quietly added a subscription and gated features, buyers
-   felt "bait-and-switched" → a **2026 class-action lawsuit.** Our at-cost framing turns
-   that liability into an honest, sympathetic story: *"we don't profit from the device —
-   only from making it useful."*
-
-**Why this fits us:** maximizes adoption (a memory product is a daily habit of one),
-recurring revenue is what investors value, and trust + edge-first processing defends the
-margin. **Why it's dangerous:** if people churn after the free period, we've given a
-device at cost *and* served them free for 3 months. The whole plan must obsess over
-**retention.**
+**Two rules the research makes mandatory:**
+1. **Bill annually, upfront (Whoop).** The category churns hard; collecting a year ahead
+   front-loads cash and locks users past the risky early months. In Uzbekistan, pair with
+   **carrier billing** and **BNPL (Uzum/Click)** for the device.
+2. **Be transparent that the device is at-cost and the value is the service.** When Oura
+   hid a subscription it got a class-action; our framing makes that an honest story.
 
 ---
 
-## 8. Pricing
+## 8. Pricing (Uzbekistan)
 
-*(Recommended; competitors sit at $8–20/mo, with always-on wearables anchored at $19 —
-Limitless and Bee both $19/mo. PLAUD Pro is $17.99/mo or $99.99/yr.)*
+Localized to local purchasing power, **not** Western numbers. The reference everyone
+knows is **Yandex Plus ≈ 16,000 som (~$1.30/mo)**; "normal/cheap" is ~15,000–30,000 som,
+**$4+ reads as premium**, and $10–20 is mass-prohibitive. (≈12,100 som = $1.)
 
-| Tier | Price *(recommended)* | What's included |
-|------|------|------------------|
-| **Free (after trial)** | $0 | Thin "safety net" — recent memory only, limited queries. Keeps churned users in the funnel, not gone forever. |
-| **Pro** | **~$11.99/mo**, or **~$99/yr (~$8.25/mo)** | Unlimited memory, full search, daily briefing, speaker ID, integrations. The core offer. |
-| **(Later) Premium / Vision** | higher | Glasses tier, find-my-things, show-me-how, family features. |
-| **(Later) Teams/Business** | per-seat | Shared team memory, admin, compliance — higher ARPU, stickier. |
+| Tier | Price | For whom |
+|------|-------|----------|
+| **Free** (after trial) | 0 | everyone — recent memory + limited queries; keeps churned users in funnel |
+| **Personal** | **~25,000 som/mo (~$2)** | mass consumer — at/just above Yandex Plus; usage-capped |
+| **Pro** | **~49,000 som/mo (~$4)** | prosumers — higher caps, priority |
+| **Business / seat** | **~120,000–190,000 som (~$10–16)** | Tashkent pros, banking/IT, SMEs — **the profitable beachhead** (≈ the "$12" we set) |
 
-- **Deliberately undercut the $19 incumbents.** Because on-device processing keeps our
-  cost at ~$0.50–4/user/mo, even **~$10–12/mo is a 70–90% margin** — so we can use price
-  as an adoption weapon (your "sell cheap" philosophy) and still be profitable. $19 is the
-  ceiling the market tolerates; we don't need it.
-- **Push annual hard** (~$99/yr) — better cash flow, far better retention.
-- **3-month free trial with a card on file ("opt-out")** — research shows opt-out trials
-  convert ~**49%** vs ~18% for opt-in. This single choice roughly **doubles conversion**
-  while still honoring "first 3 months free."
-- **Keep a free tier** rather than a hard wall, so a price-sensitive user stays a user
-  (and a future upsell) instead of churning to zero.
+- **Lead with the business/prosumer tier** — price covers cost, and these users have
+  capable phones. **Drive down to the ~$2 personal tier once self-hosted transcription
+  cuts the cost** (§9).
+- **Keep "3 months free"**, paired with a **near-free intro promo** (cf. Yandex's 100-som)
+  and **card-on-file / Payme-token auto-convert** to lift conversion.
+- **Push annual**; offer **carrier billing + BNPL** to remove price/device friction.
 
 ---
 
-## 9. Unit economics & financial model
+## 9. Unit economics & the in-country transcription moat
 
-### The make-or-break insight: edge-first processing (validated)
-A naïve cloud design **loses money.** At ~3 hrs/day of actual speech (after silence
-filtering) ≈ **90 hrs/user/mo**, cloud transcription + speaker ID costs:
+### The cost problem, and why Uzbekistan needs its own answer
+A heavy always-on user produces ~90 hrs/mo of speech. **Cloud transcription costs
+~$0.12–0.58/hr → ~$11–52/user/mo** — far above a $2–4 subscription. Elsewhere you fix
+this by transcribing **on the phone** (≈$0). **But in Uzbekistan two facts break that:**
+budget Android phones can't run it well, and **Uzbek is low-resource** (stock models are
+weak; it needs a fine-tuned model).
 
-| Approach | Cost / user / mo |
-|---|---|
-| Cloud STT — Deepgram (~$0.58/hr) | ~$52 ❌ |
-| Cloud STT — Soniox (~$0.12/hr, diarization bundled) | ~$10.80 |
-| + embeddings + LLM digests/queries + storage | **~$12–20 total ❌ (≈ the whole subscription)** |
-| **On-device transcription (faster-whisper on phone) + cloud only for embeddings/LLM** | **~$0.50–4 ✅** |
+### The answer: self-hosted, fine-tuned Uzbek/Russian STT in Tashkent (our moat)
+This one move solves **cost, law, and quality** simultaneously:
+- **Cost:** a fixed GPU cost amortized across many users beats per-minute APIs at scale —
+  what makes even a ~$2 tier viable.
+- **Law:** voice/biometric data **never leaves Uzbekistan** → compliant with the
+  data-localization rule (§16) by design.
+- **Quality / moat:** fine-tuned on Uzbek speech data that already exists (**UzbekVoice
+  ~1,400 hrs**, Common Voice ~265 hrs), our Uzbek beats Google/Yandex/Big-Tech — something
+  incumbents won't bother to do.
+- **Phasing:** **demo & early beta → cloud STT** (Yandex SpeechKit supports Uzbek +
+  Russian; Google supports `uz-UZ`) to ship fast; **migrate to self-hosted in-country** as
+  users grow. **Russian is already well-supported either way.**
+- **Recording model:** to control cost *and* consent risk, the consumer tiers are
+  **usage-capped / tap-to-record (meetings)** — unlimited 24/7 always-on is a premium
+  capability with strong consent UX, not the default.
 
-On-device transcription drops the dominant cost line to ~$0 (Whisper Large-V3-Turbo runs
-~10× real-time on a modern phone). **This one architectural choice — on-device by default
-— is simultaneously our privacy differentiator AND what makes the subscription
-profitable.** A hybrid (on-device default, cloud for hard audio) is the pragmatic path.
-
-### Illustrative unit economics *(per Pro user)*
-| Metric | Cloud-only (bad) | **Edge-first (our plan)** |
+### Illustrative unit economics
+| Metric | Cloud STT, always-on (bad) | **Capped + in-country STT (our plan)** |
 |---|---|---|
-| ARPU | ~$11–12/mo | ~$11–12/mo |
-| Serving cost | ~$12–20/mo | **~$2–4/mo** |
-| Gross margin | **negative** | **~70–85%** |
-| Gross profit / user | — | **~$8–10/mo** |
-| Hardware margin | ~$0 (sold at cost) | ~$0 (sold at cost) |
+| Serving cost | ~$11–52/mo | **~$1–4/mo at scale** |
+| Business tier ARPU (~$12) margin | thin/negative | **~70–90%** |
+| Personal tier ARPU (~$2) | impossible on cloud | **viable once self-hosted** |
 
-### LTV / CAC and the payback math
-**The good news:** because we sell hardware **at cost** (not free, like Whoop), our
-per-user cash subsidy is small — essentially just the **~3 free months of serving
-(~$1.50–12)** plus marketing CAC. At ~$8–10/mo gross profit, a converted user **repays
-the free period in ~1–2 paid months.**
-
-**The risk:** the category churns hard. Stress-test with realistic numbers:
-
-| Scenario | Monthly churn | Avg paid lifetime | LTV (gross profit) |
-|---|---|---|---|
-| Optimistic | ~5% | ~20 mo | ~$180 |
-| **Base (AI-app realistic)** | ~7% | ~14 mo | **~$125** |
-| Pessimistic | ~9% | ~11 mo | ~$95 |
-
-> Benchmarks behind this: AI apps retain only **~21% at 12 months** (vs 31% non-AI);
-> ~50% of wearables are **abandoned within a year**; only ~10% of monthly subscribers
-> reach year two. **Assume the high end of churn and design against it** (annual prepay,
-> daily-habit features, the morning briefing). Keep all-in **CAC < ~$35–45** (favor
-> organic/referral) to hold **LTV/CAC > 3×.**
-
-### Rough company economics
-At ~$9 gross profit/user/mo, **~4,000–5,000 paying users ≈ ~$40–45k/mo gross profit** —
-enough to cover a lean team's serving + meaningful opex. With the outsourcing company's
-lower labor cost, the path to sustainability is far shorter than for a typical venture.
-*(Detailed P&L scenarios can be built once price and team size are fixed.)*
+**LTV vs churn (the real risk).** AI apps keep only ~21% at 12 months; ~50% of wearables
+are abandoned within a year. Mitigate with **annual prepay**, the daily-habit briefing,
+and proactive value. Because hardware is at cost (small subsidy), a converted user repays
+the free period in ~1–2 paid months — so the levers are **conversion + early retention.**
 
 ---
 
 ## 10. Funding plan
 
-### Pre-funding (now → investor demo)
-Funded by the existing company (bootstrap) — keep it cheap. Mostly **team time**, a few
-off-the-shelf devices, and cloud credits *(< ~$30–50k of effort).* Deliverable: a
-**working, genuinely useful demo** the investor can live with for a week and not want to
-give back.
+**Pre-funding (now → demo):** bootstrapped by the existing company — team time, a few
+off-the-shelf devices, cloud credits (< ~$30–50k of effort).
 
-### The raise: ~$1M (target ~18-month runway)
-*(Illustrative — tune to the final number and your cost base. Note: a full pendant
-program from prototype to first batch is only ~$80–250k, so most of the $1M funds team +
-runway, not hardware.)*
+**The raise: ~$1M (~18-month runway).** A full pendant program (prototype → first batch)
+is only ~$80–250k, so most of the $1M funds **team + Uzbek R&D + runway**, amplified by
+IT Park's 0% tax.
 
 | Area | Share *(est.)* | What it buys |
 |---|---|---|
-| **Product & engineering team** | ~45–55% | App/backend/ML team (cheaper via your company) |
-| **Hardware: design, tooling, first batch, certs** | ~12–20% | Custom device, FCC/CE/Bluetooth certs (~$6–15k), first 1,000-unit run |
-| **Cloud & AI infrastructure** | ~5–10% | Serving, model usage, storage during growth |
-| **Legal, privacy & compliance** | ~5–8% | Recording-law/GDPR/biometric counsel — non-optional |
-| **Marketing & community / first users** | ~8–15% | Content, referrals, early-adopter program |
-| **Contingency** | ~5–10% | Overruns (hardware always overruns) |
+| **Product & engineering team** | ~40–50% | App/backend/ML (cheap via your company + IT Park) |
+| **Uzbek-language R&D + in-country GPU infra** | ~10–18% | Fine-tuned STT, Tashkent hosting (the moat) |
+| **Hardware: design, tooling, certs, first batch** | ~12–18% | Device + EMC/Uzstandard certs, 1k-unit run |
+| **Legal, privacy & compliance** | ~5–8% | Data-law registration, consent, counsel |
+| **Marketing & community** | ~8–12% | Telegram-led growth, early adopters |
+| **Contingency** | ~5–10% | Overruns |
 
-### Deal structure *(not legal/financial advice — use an advisor)*
-A ~$1M pre-seed is commonly a **SAFE/convertible** or a priced round around a
-single-digit-million post-money valuation. Your leverage: you arrive with **a working
-product the investor has personally validated**, which de-risks the check and supports
-better terms. Tie the next raise to clear milestones (below).
+**Deal structure** *(not legal/financial advice)*: a ~$1M pre-seed is commonly a SAFE/
+convertible or a small priced round. Leverage: the investor commits **after using a
+working product**, which de-risks the check and supports better terms.
 
 ---
 
-## 11. The investor demo plan (how to win the check)
+## 11. The investor demo (how to win the check)
 
-The investor decides by *using* the product, so the demo must produce the **"I'd be
-annoyed to lose this"** feeling. Plan (~8–12 weeks, your existing team):
+~1 month, existing team, off-the-shelf hardware. The full plan is in
+[`demo-sprint.md`](./demo-sprint.md). The goal is the **"I'd be annoyed to lose this"**
+feeling: he wears it through real meetings, gets a **morning briefing in his language**,
+and asks it questions that it answers with citations. Validate **Russian + Uzbek
+transcription in Week 1** (the critical risk). Bring this plan + a simple metrics view to
+the close.
 
-1. **Pick demo hardware** — off-the-shelf/open pendant or a clean phone+mic. No custom
-   hardware yet.
-2. **Build the core loop, polished:** capture → on-device transcription → speaker ID →
-   memory → ask-anything → **morning briefing** (the "wow").
-3. **Make recall feel magical and fast** — sub-second, accurate, with citations ("at
-   2:14pm you told Sara…").
-4. **Make the trust story tangible** — on-device processing, encryption, one-tap delete,
-   default-off. He should *feel* the privacy difference.
-5. **Have him use it for a real week** on his own meetings; instrument it so you can show
-   him *his* usage and the value it produced.
-6. **Bring this plan + a simple metrics dashboard** to the close.
-
-**Milestones to put in front of the investor (post-funding):**
-- **M1 (0–6 mo):** real product v1, custom hardware design started, **private beta
-  (100–500 users)**, privacy/legal foundation in place.
-- **M2 (6–12 mo):** **first manufacturing batch**, public launch, **prove free→paid
-  conversion and month-3 retention**, 1k–10k users.
-- **M3 (12–18 mo):** scale + metrics that unlock a larger round or break-even.
+**Post-funding milestones:** M1 (0–6mo) product v1 + private beta (100–500) + data-law
+foundation; M2 (6–12mo) first hardware batch + public launch + proven conversion/month-4
+retention; M3 (12–18mo) scale + next-round metrics.
 
 ---
 
-## 12. Go-to-market
+## 12. Go-to-market (Uzbekistan)
 
-- **Beachhead:** meeting-heavy knowledge workers (the PLAUD audience).
-- **Motion:** **product-led + community.** Free 3 months + at-cost device = the lowest-
-  friction trial in the category. Lean on **referrals** (memory is demo-able to friends),
-  **content/SEO** ("AI meeting memory"), and **founder/creator word-of-mouth.** Avoid
-  burning cash on paid ads until retention is proven.
-- **Trust as marketing:** publish the privacy architecture openly; make "we can't read
-  your memories" a headline, not fine print — directly contrasting the Big Tech owners.
-- **Expansion:** consumer "remember everything" mass market (cheap device + vision),
-  then **Teams/Business** (shared memory, higher ARPU, stickier).
+- **Beachhead:** Tashkent knowledge workers, banking/IT, SMEs, and students — capable
+  phones, higher willingness to pay (business tier).
+- **Channel: Telegram first** (76% reach) — channels, bots, communities; plus Instagram
+  and YouTube; **influencers** and **telco partnerships** (carrier billing/bundles) over
+  expensive paid search.
+- **Language:** Uzbek-first UI + Russian; market the **Uzbek-quality** angle proudly.
+- **Trust as marketing:** "your voice data stays in Uzbekistan, encrypted — we can't read
+  your memories." A credible, local, pro-privacy story.
+- **Expansion:** down-market to the ~$2 personal tier as costs fall; later, **Teams/
+  Business** (shared memory) and the **vision/glasses** tier; then neighboring CIS/Central
+  Asian + Turkic markets (the Uzbek/Russian/Turkic STT investment travels).
 
 ---
 
 ## 13. Roadmap
 
-| Phase | Timing | Goal | Gate to advance |
-|------|--------|------|-----------------|
-| **0 · Demo** | Now → ~12 wks | Win the investor with a polished software demo on off-the-shelf hardware | Investor commits ~$1M |
-| **1 · Build v1** | 0–6 mo post-raise | Real product, private beta (100–500), privacy/legal foundation | Users love it; retention signal |
-| **2 · Launch** | 6–12 mo | First hardware batch, public launch, prove free→paid conversion | Healthy conversion + month-3 retention |
-| **3 · Scale** | 12–18 mo | Grow users, add vision tier, prep next raise / break-even | Metrics for Series A or profitability |
+| Phase | Timing | Goal | Gate |
+|------|--------|------|------|
+| **0 · Demo** | ~1 month | Win the investor (software demo on off-the-shelf hardware, RU/UZ) | Investor commits ~$1M |
+| **1 · Build v1** | 0–6 mo | Product v1, private beta (100–500), IT Park residency, data-law foundation | Users love it; retention signal |
+| **2 · Launch** | 6–12 mo | First hardware batch + certs, public launch, Payme/Click billing, prove conversion | Healthy conversion + month-4 retention |
+| **3 · Scale** | 12–18 mo | Self-hosted in-country STT live, ~$2 tier, vision tier, next raise/break-even | Metrics for Series A or profitability |
 
 ---
 
 ## 14. Team & org
 
-- **Foundation:** your IT/outsourcing company supplies **software, backend, and ML
-  engineering** + delivery management.
-- **Key early hires/contractors (post-funding):** a **hardware/embedded** lead (the main
-  capability gap), a **consumer product/growth** owner, and **privacy/legal** counsel
-  (fractional is fine).
-- **Founder focus:** vision, the investor relationship, and — critically — business-model
-  discipline (retention, conversion, unit economics).
+- **Foundation:** your IT company supplies software/backend/ML + delivery.
+- **Post-funding hires/contractors:** an **ML/speech engineer** (Uzbek STT fine-tuning),
+  a **hardware/embedded** lead, a **consumer growth** owner, and **privacy/legal** counsel.
+- **Founder focus:** vision, investor, and business-model discipline (conversion/retention).
 
 ---
 
@@ -387,67 +303,91 @@ annoyed to lose this"** feeling. Plan (~8–12 weeks, your existing team):
 
 | Risk | Why it matters | Mitigation |
 |------|----------------|------------|
-| **Churn (the #1 risk)** | AI apps keep only ~21% at 12 mo; ~50% of wearables abandoned within a year | **Annual prepay (Whoop)**, daily-habit features (briefing), proactive value, retention > acquisition |
-| **Weak free→paid conversion** | 3 free months then $0 if they don't convert | **Card-on-file opt-out trial (~49% vs ~18%)**, strong onboarding, push annual |
-| **Cloud cost > subscription** | Kills margins | **Edge-first / on-device transcription** (also the privacy win) |
-| **Working capital / inventory** | We pay for at-cost units up front; over-ordering sank Peloton | **Small first batches (1k)**, off-the-shelf for demo, 3D-printed enclosures first, contingency budget |
-| **Selling at cost = no buffer** | Returns/warranty/support have no hardware margin | Price subscription to cover support; keep device simple/reliable |
-| **Big Tech (Meta/Amazon)** | Can subsidize + distribute; may absorb the category | Compete on **trust + focus + quality**, not price; move fast on the niche |
-| **"Bait-and-switch" perception** | Oura got a class-action for gating features behind a new sub | **Radical transparency**: device at cost, value is the service — said loudly upfront |
-| **Privacy/legal exposure** | Recording laws, GDPR, biometrics | Default-off, on-device, consent UX, regional gating, counsel (§16) |
-| **Single-investor dependency** | One "no" stalls everything | Build demo cheaply so you can show others too; don't over-fit to one person |
+| **Uzbek transcription quality** | Core value; stock models weak | Fine-tune on UzbekVoice (1,400h); cloud (Yandex) for demo; in-country self-host at scale |
+| **Budget phones can't run on-device AI** | Breaks the cheap-margin lever | Self-hosted in-country STT + usage caps |
+| **Churn** | AI apps ~21% at 12mo; wearables ~50% abandoned/yr | Annual prepay, daily briefing, retention focus |
+| **Weak free→paid conversion** | 3 free months then $0 | Card-on-file/Payme auto-convert, push annual, strong onboarding |
+| **Data-law / consent** | Biometric voice must stay in-country; always-listening optics | In-country voice store, register DB, explicit consent, capped/tap-to-record, counsel |
+| **Hardware cert/import friction** | EMC + Uzstandard + duties add time/cost | Off-the-shelf for demo; importer-of-record; IT Park customs exemption for dev units |
+| **Working capital / inventory** | At-cost units tie up cash | Small first batches (1k), BNPL, no over-ordering (Peloton lesson) |
+| **Single-market concentration** | All-in on Uzbekistan | The Uzbek/Russian/Turkic STT moat extends to CIS/Central Asia later |
+| **Single-investor dependency** | One "no" stalls everything | Cheap demo → showable to others too |
 
 ---
 
-## 16. Privacy, legal & regulatory (condensed — it's existential)
+## 16. Privacy, legal & regulatory (Uzbekistan)
 
-An always-on recorder is legally and socially radioactive if done wrong (see Microsoft
-Recall's meltdown in [`market-research.md`](./market-research.md)). Non-negotiables —
-**and they double as our brand**:
-- **Default OFF**, **on-device by default**, **encrypted everywhere**, **one-tap delete.**
-- **Clear recording indicator** + **bystander consent** (capture owner's voice by default).
-- **No emotion/biometric-categorization features** (banned in the EU AI Act).
-- **Recording-consent law** varies (~11–12 US "all-party" states; GDPR; Illinois BIPA for
-  voiceprints) → **regional feature-gating** + **legal counsel before public launch.**
-- *This section is research synthesis, not legal advice.*
-
----
-
-## 17. Key metrics to track from day one
-
-Activation (first memory captured), **D1/D7/D30 retention**, **free→paid conversion**,
-**month-4 retention** (post free-trial cliff), **cloud cost per active user**, ARPU,
-gross margin, **churn**, LTV/CAC, annual-plan mix, and referral rate. The model lives or
-dies on the **conversion + retention** pair.
+*Research synthesis, not legal advice — use licensed Uzbek counsel.*
+- **Data localization (changed 2026):** the March 2026 reform **relaxed** blanket
+  localization (cross-border allowed with safeguards), **BUT biometric data — voiceprints
+  — and telecom data must still be stored in Uzbekistan.** → Architecture: **voice/identity
+  store in a Tashkent data center; derived text/memory may go abroad** (watch the pending
+  "adequate-country" list; keep a localized fallback). **Register the database** with the
+  State Personalization Center — non-compliance triggers fines (~$1,400 → criminal
+  ~$4,300) and **app blocking** via the "Register of Infringers."
+- **Consent:** explicit consent is the lawful basis. Design consent for the **user** *and*
+  a defensible position on **bystander voice capture** (the always-listening risk) — the
+  household/personal-use exemption likely won't cover a commercial cloud service.
+- **Universal must-haves (also our brand):** default-OFF, encrypted, one-tap delete, clear
+  recording indicator, **no emotion/biometric profiling**, capped/tap-to-record default.
 
 ---
 
-## 18. Assumptions to confirm with you
+## 17. Operating playbook (Uzbekistan specifics)
 
-So I can finalize the numbers, please confirm or correct:
-1. **Subscription price** — is ~$11.99/mo (annual ~$99) the right band, or
-   cheaper/higher? (Market ceiling is ~$19.)
-2. **Annual prepay + card-on-file trial** — OK to use these to fight churn while keeping
-   "3 months free"?
-3. **Target market / geography** for launch (affects pricing, legal, TAM).
-4. **Timeline** to the investor demo — is ~8–12 weeks realistic for your team?
-5. **Entry device** — start with a cheap **audio pendant** (glasses as a later premium
-   tier), or do you want glasses in the first product?
+- **IT Park residency (do this early):** 0% profit/turnover/VAT/social tax, **7.5%**
+  payroll income tax, **VAT on imported services waived** (helps buying foreign cloud/AI),
+  through 2028 (2040 if >50% export revenue). Grants: up to **$20k** incubation, **$100k**
+  IT Park Ventures co-invest, **$1M** President Tech Award. *Confirm your subscription SaaS
+  isn't reclassified into the excluded payment/marketplace bucket (rule changed Apr 2026).*
+- **Payments:** integrate **Payme + Click recurring APIs** (PayTechUZ wraps Payme/Click/
+  Atmos); add **carrier billing** and **BNPL (Uzum/Click)** for the device. Uzcard/Humo are
+  the card rails.
+- **Hardware import/sale:** budget for **EMC type approval (Ministry of Digital Tech) +
+  Uzstandard certification per SKU**, a **local importer-of-record**, **E-Contract**
+  registration, ~**12% import VAT + ~10–20% consumer-electronics duty** (IT Park customs
+  exemption helps for *dev* units, not resale stock).
+- **Compute:** demo/beta on cloud (Yandex SpeechKit / Google `uz-UZ`); **self-hosted
+  fine-tuned Whisper-medium on Tashkent GPUs** at scale (cost + law + Uzbek-quality moat).
 
 ---
 
-## 19. Sources (key figures)
+## 18. Assumptions — confirmed & remaining
 
-Market & benchmarks: Research and Markets (wearable AI), MarketsandMarkets & Grand View
-(smart glasses), MarketIntelo/Technavio & Market Research Future (AI note-takers),
-Counterpoint (smart-glasses shipments), RevenueCat *State of Subscription Apps 2025* &
-ChartMogul (AI-app churn), First Page Sage/Userpilot (trial/freemium conversion),
-ScienceDirect/Centercode (wearable abandonment). Comparables: CNBC/BusinessWire/Sacra
-(Oura), Yahoo Finance/Sacra (Whoop), Sacra/ARR Club/36Kr (PLAUD), Otter.ai (ARR).
-Costs: Fanstel & Omi/Based Hardware (BOM), Zetarmold (tooling), JJRLAB & Bluetooth SIG
-(certs), Deepgram/Soniox/AssemblyAI (STT pricing), OpenAI/IntuitionLabs (embeddings/LLM).
+**Confirmed with you:** business tier ≈ $12/mo · annual prepay + card-on-file trial ·
+**Uzbekistan** launch · **~1-month** demo · **audio pendant** entry device.
+
+**Still to decide (we can take these as we go):**
+1. Lead segment — agree we **start with the business/prosumer tier** (Tashkent pros/SMEs)
+   and add the ~$2 personal tier after self-hosted STT? *(recommended)*
+2. Demo language — **Russian first**, Uzbek as the funded moat, or push Uzbek into the
+   demo immediately?
+3. Pendant for the demo — buy **Omi (open)**, or simplest **phone + clip-on mic**?
+
+---
+
+## 19. Key metrics
+
+Activation (first memory), D1/D7/D30 retention, **free→paid conversion**, **month-4
+retention**, **transcription accuracy (Uzbek & Russian)**, cost/active user, ARPU, gross
+margin, churn, annual-plan mix, referral rate.
+
+---
+
+## 20. Sources (key figures)
+
+**Global market/benchmarks/comparables:** Research and Markets, MarketsandMarkets, Grand
+View (wearables/glasses); MarketIntelo/Technavio/MRFR (AI note-takers); RevenueCat &
+ChartMogul (AI-app churn); CNBC/BusinessWire/Sacra (Oura), Yahoo Finance/Sacra (Whoop),
+Sacra/ARR Club (PLAUD). **Costs:** Fanstel & Omi/Based Hardware (BOM), Zetarmold (tooling),
+Bluetooth SIG/JJRLAB (certs), Deepgram/Soniox/AssemblyAI (STT). **Uzbekistan market:**
+Worldometer/DataReportal/IMF (demographics, internet, Telegram), UzDaily/Kun.uz/wage.is
+(salaries), UzDaily/Ucell (Yandex Plus pricing), Esplora Legal/KPMG & Payme/Click/PayTechUZ
+docs (payments). **Uzbekistan legal/IT Park/ASR:** Dentons/settleadvisory/dataguidance &
+loc.gov (data-localization 2026 reform + biometric carve-out), dlapiper (privacy), Mondaq/
+EY/it-park.uz (IT Park incentives), trade.gov/PwC/ib-lenhardt/TÜV SÜD (import/EMC certs),
+HuggingFace/MDPI/Nature/Yandex/Google Cloud docs & UzbekVoice.ai (Uzbek + Russian STT).
 Full URLs are preserved in the research transcripts and [`market-research.md`](./market-research.md).
 
-*Companion documents: [`master-plan.md`](./master-plan.md) (product & technical plan),
-[`market-research.md`](./market-research.md) (competitive landscape). A visual,
-investor-friendly HTML version of this plan is at [`omnisense-report.html`](./omnisense-report.html).*
+*Companion docs: [`master-plan.md`](./master-plan.md), [`market-research.md`](./market-research.md),
+[`demo-sprint.md`](./demo-sprint.md). Visual brief: [`omnisense-report.html`](./omnisense-report.html).*

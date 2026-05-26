@@ -7,15 +7,21 @@ where you left your keys, or how you fixed something last time.
 > Status: **planning / pre-prototype.** This repo currently holds the strategy and
 > research; no application code yet.
 
+> Launch market: **Uzbekistan.** Model: **hardware at cost + subscription, first 3
+> months free.** Moat: **in-country, fine-tuned Uzbek speech** that Big Tech won't build.
+
 ## Start here
-- **[`docs/business-plan.md`](docs/business-plan.md)** — the complete business plan
-  (model, pricing, unit economics, the ~$1M raise, go-to-market, roadmap). **Primary doc.**
-- **[`docs/omnisense-report.html`](docs/omnisense-report.html)** — a visual,
+- **[`docs/business-plan.md`](docs/business-plan.md)** — the complete business plan,
+  localized for Uzbekistan (pricing in som, unit economics, the ~$1M raise, GTM,
+  roadmap, data-law/IT-Park). **Primary doc.**
+- **[`docs/omnisense-report.html`](docs/omnisense-report.html)** — the visual,
   investor-friendly brief (open in any browser; self-contained).
+- **[`docs/demo-sprint.md`](docs/demo-sprint.md)** — the 30-day plan to build the
+  investor demo.
 - **[`docs/master-plan.md`](docs/master-plan.md)** — the product & technical build plan
   (vision, architecture, privacy, next steps).
-- **[`docs/market-research.md`](docs/market-research.md)** — the competitive landscape
-  and lessons (Humane, Rabbit, PLAUD, Limitless, Bee, Meta Ray-Ban, etc.) with sources.
+- **[`docs/market-research.md`](docs/market-research.md)** — the global competitive
+  landscape and lessons (Humane, Rabbit, PLAUD, Limitless, Bee, Meta Ray-Ban) with sources.
 
 ## The approach in one breath
 Software-first, audio-first. Prove the memory + recall engine on hardware you can buy
