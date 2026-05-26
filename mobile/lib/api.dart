@@ -3,12 +3,23 @@ import 'package:http/http.dart' as http;
 
 /// Thin client for the Omnisense Phase-0 API.
 /// Point [baseUrl] at your backend (Android emulator: http://10.0.2.2:8000).
+///
+/// Pass [tenantId] to scope every call to a per-install identity (X-User-Id) so
+/// two installs of the app on the same backend get separate memories.
 class OmniApi {
-  OmniApi(this.baseUrl);
+  OmniApi(this.baseUrl, {this.tenantId});
   final String baseUrl;
+  final String? tenantId;
 
-  Future<Map<String, dynamic>> health() async =>
-      _get('/health');
+  Map<String, String> _headers({String? contentType}) {
+    final h = <String, String>{};
+    if (contentType != null) h['Content-Type'] = contentType;
+    final tid = tenantId;
+    if (tid != null && tid.isNotEmpty) h['X-User-Id'] = tid;
+    return h;
+  }
+
+  Future<Map<String, dynamic>> health() async => _get('/health');
 
   Future<Map<String, dynamic>> ingestText(String text, String lang) async =>
       _post('/ingest/text', {'text': text, 'lang': lang});
@@ -18,6 +29,8 @@ class OmniApi {
     final req = http.MultipartRequest('POST', Uri.parse('$baseUrl/ingest/audio'))
       ..fields['lang'] = lang
       ..files.add(await http.MultipartFile.fromPath('file', filePath));
+    final tid = tenantId;
+    if (tid != null && tid.isNotEmpty) req.headers['X-User-Id'] = tid;
     final resp = await req.send();
     final body = await resp.stream.bytesToString();
     return jsonDecode(body) as Map<String, dynamic>;
@@ -26,22 +39,26 @@ class OmniApi {
   Future<Map<String, dynamic>> ask(String question, String lang) async =>
       _post('/ask', {'question': question, 'lang': lang});
 
-  Future<Map<String, dynamic>> briefing(String lang) async =>
-      _get('/briefing?lang=$lang');
+  Future<Map<String, dynamic>> briefing(String lang) async => _get('/briefing?lang=$lang');
+
+  Future<Map<String, dynamic>> usage() async => _get('/usage');
 
   Future<Map<String, dynamic>> deleteAll() async {
-    final r = await http.delete(Uri.parse('$baseUrl/data'));
+    final r = await http.delete(Uri.parse('$baseUrl/data'), headers: _headers());
     return jsonDecode(r.body) as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body) async {
-    final r = await http.post(Uri.parse('$baseUrl$path'),
-        headers: {'Content-Type': 'application/json'}, body: jsonEncode(body));
+    final r = await http.post(
+      Uri.parse('$baseUrl$path'),
+      headers: _headers(contentType: 'application/json'),
+      body: jsonEncode(body),
+    );
     return jsonDecode(r.body) as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> _get(String path) async {
-    final r = await http.get(Uri.parse('$baseUrl$path'));
+    final r = await http.get(Uri.parse('$baseUrl$path'), headers: _headers());
     return jsonDecode(r.body) as Map<String, dynamic>;
   }
 }

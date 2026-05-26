@@ -64,12 +64,20 @@ class _CaptureScreenState extends State<CaptureScreen> {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        if (_recording) const _RecordingIndicator(),
         Center(
           child: FilledButton.icon(
             onPressed: _toggleRecord,
             icon: Icon(_recording ? Icons.stop : Icons.mic),
             label: Text(_recording ? 'Stop & save' : 'Record a conversation'),
           ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Capture is default-off. Recording only runs while this screen is open and only '
+          'after you tap above.',
+          style: TextStyle(color: Colors.black54, fontSize: 12),
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         const Divider(),
@@ -87,4 +95,48 @@ class _CaptureScreenState extends State<CaptureScreen> {
       ]),
     );
   }
+}
+
+/// Pulsing red dot + "Recording" label, shown ONLY while audio capture is active.
+/// Designed to be impossible to miss — meeting the "visible recording indicator"
+/// commitment from the consent screen and the privacy law's spirit.
+class _RecordingIndicator extends StatefulWidget {
+  const _RecordingIndicator();
+  @override
+  State<_RecordingIndicator> createState() => _RecordingIndicatorState();
+}
+
+class _RecordingIndicatorState extends State<_RecordingIndicator>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c =
+      AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat(reverse: true);
+  late final Animation<double> _a = Tween(begin: 0.4, end: 1.0).animate(_c);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.red.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.red.withOpacity(0.4)),
+          ),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            FadeTransition(
+              opacity: _a,
+              child: const Icon(Icons.fiber_manual_record, color: Colors.red, size: 14),
+            ),
+            const SizedBox(width: 8),
+            const Text('Recording — tap "Stop & save" to end.',
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+          ]),
+        ),
+      );
 }
