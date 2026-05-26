@@ -17,7 +17,7 @@ class Settings:
     # Provider selection: "mock" (offline default) or a real adapter name.
     stt_provider: str = _env("OMNI_STT", "mock")          # mock | yandex
     embed_provider: str = _env("OMNI_EMBED", "mock")      # mock | openai
-    llm_provider: str = _env("OMNI_LLM", "mock")          # mock | openai
+    llm_provider: str = _env("OMNI_LLM", "mock")          # mock | anthropic | openai
     store_backend: str = _env("OMNI_STORE", "memory")     # memory | pgvector
 
     embedding_dim: int = int(_env("OMNI_EMBED_DIM", "256"))
@@ -33,6 +33,11 @@ class Settings:
     openai_base_url: str = _env("OPENAI_BASE_URL", "https://api.openai.com/v1")
     openai_chat_model: str = _env("OMNI_CHAT_MODEL", "gpt-4o-mini")
     openai_embed_model: str = _env("OMNI_EMBED_MODEL", "text-embedding-3-small")
+
+    # Anthropic (Claude) — the reasoning/answer + briefing LLM.
+    anthropic_api_key: str = _env("ANTHROPIC_API_KEY")
+    anthropic_model: str = _env("OMNI_ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
+    anthropic_version: str = _env("ANTHROPIC_VERSION", "2023-06-01")
 
     database_url: str = _env("DATABASE_URL", "postgresql://omni:omni@localhost:5432/omni")
 

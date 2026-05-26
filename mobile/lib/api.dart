@@ -13,6 +13,16 @@ class OmniApi {
   Future<Map<String, dynamic>> ingestText(String text, String lang) async =>
       _post('/ingest/text', {'text': text, 'lang': lang});
 
+  /// Upload a recorded audio file to the STT pipeline (POST /ingest/audio, multipart).
+  Future<Map<String, dynamic>> uploadAudio(String filePath, String lang) async {
+    final req = http.MultipartRequest('POST', Uri.parse('$baseUrl/ingest/audio'))
+      ..fields['lang'] = lang
+      ..files.add(await http.MultipartFile.fromPath('file', filePath));
+    final resp = await req.send();
+    final body = await resp.stream.bytesToString();
+    return jsonDecode(body) as Map<String, dynamic>;
+  }
+
   Future<Map<String, dynamic>> ask(String question, String lang) async =>
       _post('/ask', {'question': question, 'lang': lang});
 

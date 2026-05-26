@@ -10,6 +10,9 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^1.2.0
+  record: ^5.1.0          # microphone capture
+  path_provider: ^2.1.0   # temp file location for recordings
+  permission_handler: ^11.3.0
 
 dev_dependencies:
   flutter_lints: ^4.0.0

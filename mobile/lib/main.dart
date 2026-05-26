@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'api.dart';
+import 'capture.dart';
 
 // Phase-0 shell: three screens (Capture / Ask / Briefing) over the backend API.
 // Real on-device recording + BLE pendant capture come in Phase 1; here "Capture" ingests
@@ -30,16 +31,9 @@ class _HomeState extends State<Home> {
   int _tab = 0;
   String _lang = 'ru';
 
-  final _capture = TextEditingController();
   final _question = TextEditingController();
-  String _captureOut = '';
   String _askOut = '';
   String _briefOut = '';
-
-  Future<void> _ingest() async {
-    final r = await api.ingestText(_capture.text, _lang);
-    setState(() => _captureOut = 'Saved ${r['segments']} memories.');
-  }
 
   Future<void> _ask() async {
     final r = await api.ask(_question.text, _lang);
@@ -57,7 +51,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     final bodies = [
-      _pane('Capture a conversation', _capture, 'Paste a transcript…', _ingest, 'Remember it', _captureOut),
+      CaptureScreen(api: api, lang: _lang),
       _pane('Ask your memory', _question, 'e.g. when is the demo?', _ask, 'Ask', _askOut),
       Padding(
         padding: const EdgeInsets.all(16),

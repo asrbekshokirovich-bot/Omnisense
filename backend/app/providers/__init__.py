@@ -21,6 +21,9 @@ def make_embedding(s: Settings) -> EmbeddingProvider:
 
 
 def make_llm(s: Settings) -> LLMProvider:
+    if s.llm_provider == "anthropic":
+        from .llm_anthropic import AnthropicLLM
+        return AnthropicLLM(s.anthropic_api_key, s.anthropic_model, s.anthropic_version)
     if s.llm_provider == "openai":
         from .llm_openai import OpenAILLM
         return OpenAILLM(s.openai_api_key, s.openai_base_url, s.openai_chat_model)
