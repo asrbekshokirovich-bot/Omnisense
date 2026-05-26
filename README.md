@@ -18,6 +18,8 @@ where you left your keys, or how you fixed something last time.
   investor-friendly brief (open in any browser; self-contained).
 - **[`docs/demo-sprint.md`](docs/demo-sprint.md)** — the 30-day plan to build the
   investor demo.
+- **[`docs/development-plan.md`](docs/development-plan.md)** — the engineering plan:
+  architecture, tech stack, the Uzbek-speech workstream, pipeline, and delivery phases.
 - **[`docs/master-plan.md`](docs/master-plan.md)** — the product & technical build plan
   (vision, architecture, privacy, next steps).
 - **[`docs/market-research.md`](docs/market-research.md)** — the global competitive
