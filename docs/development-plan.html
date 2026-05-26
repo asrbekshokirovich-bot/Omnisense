@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Omnisense — Development Plan</title>
+<style>
+  :root{
+    --indigo:#6366f1; --violet:#8b5cf6; --cyan:#06b6d4;
+    --green:#10b981; --red:#ef4444; --amber:#f59e0b; --blue:#3b82f6;
+    --ink:#0f172a; --slate:#334155; --muted:#64748b; --line:#e2e8f0;
+    --bg:#f6f7fb; --card:#ffffff; --soft:#f1f5f9;
+    --shadow:0 1px 2px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.06);
+    --shadow-lg:0 10px 40px rgba(79,70,229,.18);
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:var(--indigo);text-decoration:none} a:hover{text-decoration:underline}
+  code{background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:.9em}
+  #progress{position:fixed;top:0;left:0;height:4px;width:0;z-index:60;
+    background:linear-gradient(90deg,var(--indigo),var(--violet),var(--cyan));transition:width .1s}
+  nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  nav .wrap{max-width:1080px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  nav .brand{font-weight:800;letter-spacing:.3px;display:flex;align-items:center;gap:8px}
+  nav .brand .dot{width:12px;height:12px;border-radius:50%;background:linear-gradient(135deg,var(--indigo),var(--cyan));box-shadow:0 0 0 4px rgba(99,102,241,.15)}
+  nav .links{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+  nav .links a{font-size:12.5px;color:var(--slate);padding:6px 9px;border-radius:999px}
+  nav .links a:hover{background:var(--soft);text-decoration:none;color:var(--ink)}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  section{padding:52px 0;scroll-margin-top:66px}
+  .hero{position:relative;overflow:hidden;color:#fff;
+    background:radial-gradient(1200px 500px at 10% -10%,rgba(6,182,212,.55),transparent 55%),
+               radial-gradient(1000px 500px at 110% 0%,rgba(139,92,246,.55),transparent 50%),
+               linear-gradient(135deg,#0f766e,#4338ca 55%,#6d28d9)}
+  .hero .wrap{padding-top:64px;padding-bottom:74px;position:relative;z-index:2}
+  .hero h1{font-size:clamp(32px,6vw,56px);line-height:1.05;margin:14px 0 8px;font-weight:850;letter-spacing:-.5px}
+  .hero .tag{font-size:clamp(16px,2.4vw,20px);max-width:680px;color:#eef2ff;opacity:.95}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#c7d2fe;background:rgba(255,255,255,.12);padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2)}
+  .chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+  .chip{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:8px 14px;border-radius:12px;font-size:13px;font-weight:600;display:flex;gap:8px;align-items:center}
+  .chip b{font-weight:800;color:#fff}
+  .stats{margin-top:-34px;position:relative;z-index:5}
+  .stats .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+  .stat .n{font-size:clamp(18px,2.5vw,24px);font-weight:850;background:linear-gradient(135deg,var(--indigo),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat .l{font-size:12.5px;color:var(--muted);margin-top:2px}
+  h2.sec{font-size:clamp(24px,3.4vw,34px);font-weight:820;letter-spacing:-.4px;margin:0 0 6px;display:flex;align-items:center;gap:14px}
+  h2.sec .num{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:16px;color:#fff;background:linear-gradient(135deg,var(--indigo),var(--violet));box-shadow:var(--shadow)}
+  .sub{color:var(--muted);max-width:780px;margin:0 0 26px;font-size:16px}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);position:relative;transition:transform .15s,box-shadow .15s}
+  .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+  .card h3{margin:12px 0 6px;font-size:18px} .card p{margin:0;color:var(--slate);font-size:14.5px}
+  .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#fff}
+  .ic svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .bi{background:linear-gradient(135deg,#6366f1,#22d3ee)} .bg{background:linear-gradient(135deg,#10b981,#34d399)}
+  .ba{background:linear-gradient(135deg,#f59e0b,#fbbf24)} .br{background:linear-gradient(135deg,#ef4444,#fb7185)}
+  .bv{background:linear-gradient(135deg,#8b5cf6,#c084fc)}
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .panel{border-radius:var(--radius);padding:22px;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .panel.local{background:linear-gradient(180deg,#eff6ff,#fff);border-color:#bfdbfe}
+  .panel.abroad{background:linear-gradient(180deg,#fff7ed,#fff);border-color:#fed7aa}
+  .panel h3{margin:0 0 14px;display:flex;align-items:center;gap:10px;font-size:18px}
+  .pill-h{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:999px}
+  .ph-local{background:#dbeafe;color:#1e40af} .ph-abroad{background:#ffedd5;color:#9a3412}
+  .item{display:flex;gap:12px;padding:10px 0;border-top:1px dashed var(--line)} .item:first-of-type{border-top:none}
+  .item .name{font-weight:700;font-size:14px}
+  .badge{flex:none;font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;height:fit-content;margin-top:1px}
+  .b-local{background:#dbeafe;color:#1e40af} .b-abroad{background:#ffedd5;color:#9a3412}
+  .tablewrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow)}
+  table{border-collapse:collapse;width:100%;background:var(--card);min-width:560px}
+  th,td{padding:11px 16px;text-align:left;font-size:13.5px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--soft);font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+  tr:last-child td{border-bottom:none} td b{color:var(--ink)}
+  .flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;justify-content:center}
+  .step{flex:1 1 140px;min-width:130px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow);position:relative;margin:8px}
+  .step .k{font-size:11px;font-weight:800;letter-spacing:.5px;color:var(--indigo);text-transform:uppercase}
+  .step .v{font-weight:800;font-size:15px;margin:6px 0 2px} .step .d{font-size:12px;color:var(--muted)}
+  .step .arrow{position:absolute;right:-22px;top:50%;transform:translateY(-50%);color:var(--violet);font-size:22px;font-weight:800}
+  @media(max-width:760px){.step .arrow{display:none}}
+  .callout{border-radius:14px;padding:18px 20px;display:flex;gap:14px;align-items:flex-start;margin:16px 0}
+  .callout svg{flex:none;width:24px;height:24px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .co-amber{background:#fffbeb;border:1px solid #fde68a;color:#78350f} .co-amber svg{stroke:#d97706}
+  .co-green{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46} .co-green svg{stroke:#059669}
+  .co-blue{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a} .co-blue svg{stroke:#2563eb}
+  .callout b{font-weight:800}
+  .check{columns:2;column-gap:22px} @media(max-width:720px){.check{columns:1}}
+  .check .li{break-inside:avoid;display:flex;gap:10px;padding:8px 0;font-size:14px;color:var(--slate)}
+  .check .li svg{flex:none;width:20px;height:20px;stroke:#059669;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;margin-top:2px}
+  .timeline{position:relative;margin-top:10px}
+  .timeline::before{content:"";position:absolute;left:18px;top:6px;bottom:6px;width:3px;background:linear-gradient(180deg,var(--cyan),var(--violet),var(--indigo));border-radius:3px}
+  .phase{position:relative;padding:0 0 22px 56px}
+  .phase .node{position:absolute;left:8px;top:2px;width:23px;height:23px;border-radius:50%;background:#fff;border:3px solid var(--violet);box-shadow:0 0 0 4px rgba(139,92,246,.12)}
+  .phase h4{margin:0 0 3px;font-size:16px}
+  .phase .when{font-size:12px;font-weight:800;color:var(--indigo);text-transform:uppercase;letter-spacing:.5px}
+  .phase p{margin:4px 0;font-size:14px;color:var(--slate)}
+  .phase .gate{font-size:13px;background:var(--soft);border-radius:10px;padding:8px 12px;margin-top:6px;display:inline-block} .phase .gate b{color:#047857}
+  .rule{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);display:flex;gap:12px}
+  .rule .rn{flex:none;width:30px;height:30px;border-radius:9px;background:var(--soft);display:grid;place-items:center;font-weight:850;color:var(--violet)}
+  .rule p{margin:0;font-size:14px;color:var(--slate)} .rule b{color:var(--ink)}
+  .snum{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)} .snum:last-child{border-bottom:none}
+  .snum .c{counter-increment:s;flex:none;width:30px;height:30px;border-radius:50%;color:#fff;background:linear-gradient(135deg,var(--indigo),var(--cyan));display:grid;place-items:center;font-weight:800;font-size:14px}
+  .steps-num{counter-reset:s} .snum .c::before{content:counter(s)}
+  .snum div p{margin:0;font-size:14.5px;color:var(--slate)} .snum div b{color:var(--ink)}
+  footer{background:var(--ink);color:#cbd5e1;padding:40px 0 50px;margin-top:30px}
+  footer .wrap{display:flex;flex-direction:column;gap:10px} footer b{color:#fff}
+  footer .note{font-size:12.5px;color:#94a3b8;border-top:1px solid #1e293b;padding-top:14px;margin-top:8px}
+  @media(max-width:860px){.g4{grid-template-columns:repeat(2,1fr)}.stats .grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:680px){.g2,.g3,.compare{grid-template-columns:1fr}.check{columns:1}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<nav>
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span> Omnisense · Dev Plan</div>
+    <div class="links">
+      <a href="#principles">Principles</a>
+      <a href="#arch">Architecture</a>
+      <a href="#stack">Stack</a>
+      <a href="#pipeline">Pipeline</a>
+      <a href="#moat">Uzbek STT</a>
+      <a href="#delivery">Delivery</a>
+      <a href="#risks">Risks</a>
+      <a href="#next">Next</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Engineering Development Plan · Uzbekistan · May 2026</span>
+    <h1>How we build it.</h1>
+    <p class="tag">One pipeline — capture → transcribe → remember → answer → brief — built for audio, in Uzbek &amp; Russian, privacy- and residency-aware. Cloud for the 1-month demo; self-hosted, in-country at scale.</p>
+    <div class="chips">
+      <span class="chip">Flutter · <b>Android-first</b></span>
+      <span class="chip">FastAPI · <b>pgvector</b></span>
+      <span class="chip">STT: <b>Yandex → self-hosted Whisper</b></span>
+      <span class="chip"><b>Voice stays in-country</b></span>
+      <span class="chip">Demo: <b>~4 weeks</b></span>
+    </div>
+  </div>
+</header>
+
+<div class="stats wrap">
+  <div class="grid">
+    <div class="stat"><div class="n">1 pipeline</div><div class="l">Capture→transcribe→remember→answer→brief — built once for audio, reused for screen/vision.</div></div>
+    <div class="stat"><div class="n">RU + UZ</div><div class="l">Bilingual from line one. Russian is solved; Uzbek is the R&amp;D moat.</div></div>
+    <div class="stat"><div class="n">In-country</div><div class="l">Raw audio, voiceprints &amp; STT in Tashkent; only text leaves (with consent).</div></div>
+    <div class="stat"><div class="n">4 weeks</div><div class="l">To a working demo on off-the-shelf hardware. No custom hardware yet.</div></div>
+  </div>
+</div>
+
+<!-- PRINCIPLES -->
+<section id="principles">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">1</span> Engineering principles</h2>
+    <p class="sub">Six rules that keep the build fast, compliant, and cheap to run.</p>
+    <div class="grid g3">
+      <div class="rule"><div class="rn">1</div><p><b>Ship the loop, not the vision.</b> One pipeline, reused for every use case.</p></div>
+      <div class="rule"><div class="rn">2</div><p><b>Edge + cloud, residency-aware.</b> Voiceprints never leave Uzbekistan.</p></div>
+      <div class="rule"><div class="rn">3</div><p><b>Bilingual from line one.</b> Uzbek is a first-class workstream, not an afterthought.</p></div>
+      <div class="rule"><div class="rn">4</div><p><b>Privacy by construction.</b> Default-off, encrypted, deletable, consented. No secrets in client code.</p></div>
+      <div class="rule"><div class="rn">5</div><p><b>Demo-then-harden.</b> Demo uses cloud STT; production swaps in self-hosted behind the same interface.</p></div>
+      <div class="rule"><div class="rn">6</div><p><b>Interfaces over implementations.</b> Wrap STT / embeddings / LLM so we can swap cloud↔self-hosted freely.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section id="arch" style="background:linear-gradient(180deg,#fff,#f6f7fb)">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">2</span> Architecture</h2>
+    <p class="sub">Audio flows from the device through the app (silence filtered) into the in-country backend, which transcribes, identifies speakers, and indexes memory. Only derived <b>text</b> is sent to an external LLM for answers and briefings.</p>
+    <div class="flow">
+      <div class="step"><div class="k">Device</div><div class="v">Capture</div><div class="d">Pendant / phone mic</div><span class="arrow">›</span></div>
+      <div class="step"><div class="k">App (Flutter)</div><div class="v">VAD + record</div><div class="d">Drop silence; upload over TLS</div><span class="arrow">›</span></div>
+      <div class="step"><div class="k">In-country</div><div class="v">STT + diarize</div><div class="d">Transcribe RU/UZ; who-said-what</div><span class="arrow">›</span></div>
+      <div class="step"><div class="k">In-country</div><div class="v">Embed + index</div><div class="d">pgvector memory + metadata</div><span class="arrow">›</span></div>
+      <div class="step"><div class="k">External (text)</div><div class="v">LLM</div><div class="d">RAG answers + daily brief</div></div>
+    </div>
+
+    <h3 style="margin:30px 0 10px;font-size:18px">Data-residency split — compliance by design</h3>
+    <div class="compare">
+      <div class="panel local">
+        <h3><span class="pill-h ph-local">Stays in Uzbekistan</span> required</h3>
+        <div class="item"><span class="badge b-local">VOICE</span><div><div class="name">Raw audio</div></div></div>
+        <div class="item"><span class="badge b-local">BIOMETRIC</span><div><div class="name">Voiceprints / speaker embeddings</div></div></div>
+        <div class="item"><span class="badge b-local">SERVICE</span><div><div class="name">STT + diarization service (Tashkent GPU)</div></div></div>
+        <div class="item"><span class="badge b-local">DB</span><div><div class="name">Primary database (transcripts, memory, metadata)</div></div></div>
+      </div>
+      <div class="panel abroad">
+        <h3><span class="pill-h ph-abroad">May go abroad</span> text only, with consent</h3>
+        <div class="item"><span class="badge b-abroad">TEXT</span><div><div class="name">Transcribed text → external LLM for answers &amp; briefings</div></div></div>
+        <div class="item"><span class="badge b-abroad">OPTION</span><div><div class="name">Hardening at scale: self-host an open LLM (Qwen/Llama/Gemma) in-country to remove cross-border text flow</div></div></div>
+        <div class="item"><span class="badge b-abroad">WATCH</span><div><div class="name">"Adequate-country" list still pending — keep an in-country fallback for everything</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STACK -->
+<section id="stack">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">3</span> Tech stack</h2>
+    <p class="sub">Opinionated and decisive — chosen for speed now and the in-country, low-cost path later.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Layer</th><th>Choice</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td><b>Mobile app</b></td><td>Flutter (Android-first)</td><td>One codebase, fast; native modules for background audio + BLE</td></tr>
+          <tr><td><b>Backend</b></td><td>Python + FastAPI</td><td>Best AI/ML ecosystem; async; easy to wrap STT/embeddings</td></tr>
+          <tr><td><b>Queue / cache</b></td><td>Redis + Celery</td><td>Async audio processing jobs</td></tr>
+          <tr><td><b>Database</b></td><td>Postgres + pgvector</td><td>Transcripts + vectors + time/speaker in one DB (Qdrant later)</td></tr>
+          <tr><td><b>VAD</b></td><td>Silero</td><td>Drop silence → cut cost massively</td></tr>
+          <tr><td><b>STT (demo)</b></td><td>Yandex SpeechKit (UZ+RU)</td><td>Best commercial Uzbek; Google <code>uz-UZ</code> fallback</td></tr>
+          <tr><td><b>STT (prod)</b></td><td>Self-hosted fine-tuned Whisper</td><td>Cost + residency + Uzbek-quality moat (§5)</td></tr>
+          <tr><td><b>Diarization</b></td><td>pyannote 3.1 → NeMo</td><td>"Who said what" + owner voice enrollment — our edge</td></tr>
+          <tr><td><b>Embeddings</b></td><td>BGE-M3 (multilingual, self-hosted)</td><td>Handles RU/UZ; keeps data in-country</td></tr>
+          <tr><td><b>Memory / RAG</b></td><td>pgvector RAG → Mem0 + Graphiti</td><td>Episodic + semantic; hybrid retrieval; temporal "what changed"</td></tr>
+          <tr><td><b>LLM</b></td><td>Claude (primary), GPT/Gemini fallback</td><td>Multilingual reasoning; self-host option later for residency</td></tr>
+          <tr><td><b>Payments</b></td><td>Payme + Click, carrier billing, BNPL</td><td>Post-demo</td></tr>
+          <tr><td><b>Infra / CI</b></td><td>Docker · in-country VM/k8s · GitHub Actions</td><td>Start simple, scale to k8s</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout co-blue"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg><div><b>Repo (monorepo):</b> <code>/mobile</code> (Flutter) · <code>/backend</code> (FastAPI) · <code>/ml</code> (STT fine-tuning + eval) · <code>/infra</code> (Docker/deploy) · <code>/docs</code>. Trunk-based, PR review, CI on every PR, secrets in a manager — never in code.</div></div>
+  </div>
+</section>
+
+<!-- PIPELINE -->
+<section id="pipeline" style="background:linear-gradient(180deg,#fff,#f6f7fb)">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">4</span> The pipeline</h2>
+    <p class="sub">Eight steps, one loop. Recall answers target &lt;2s; transcription &amp; briefing run async after the meeting.</p>
+    <div class="grid g4">
+      <div class="card"><div class="ic bi"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v4"/></svg></div><h3>1 · Capture</h3><p>Default-off recording; Silero VAD drops silence; chunked &amp; uploaded over TLS.</p></div>
+      <div class="card"><div class="ic bi"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div><h3>2 · Transcribe</h3><p>STT → timestamped RU/UZ text (cloud now, self-hosted later).</p></div>
+      <div class="card"><div class="ic bv"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M4 19a5 5 0 0 1 10 0M14.5 19a4 4 0 0 1 5.5-3.7"/></svg></div><h3>3 · Diarize</h3><p>Label speakers; owner enrolled via voiceprint (in-country); user can correct.</p></div>
+      <div class="card"><div class="ic bg"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="1.4" fill="#fff" stroke="none"/><circle cx="14" cy="12" r="1.4" fill="#fff" stroke="none"/></svg></div><h3>4 · Index</h3><p>Chunk → BGE-M3 embeddings → pgvector with time/speaker/lang. Hybrid retrieval.</p></div>
+      <div class="card"><div class="ic bv"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M7.5 7.5 11 16M16.5 7.5 13 16M8 6h8"/></svg></div><h3>5 · Distill</h3><p>(Phase 1+) entities, decisions, commitments → knowledge graph (Graphiti).</p></div>
+      <div class="card"><div class="ic ba"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-12 7.7L3 21l1.8-6A8.5 8.5 0 1 1 21 11.5z"/></svg></div><h3>6 · Answer</h3><p>Question → retrieve top-k → LLM answers in RU/UZ with citations (time + speaker).</p></div>
+      <div class="card"><div class="ic ba"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div><h3>7 · Brief</h3><p>Scheduled job → decisions, action items, key quotes → morning push.</p></div>
+      <div class="card"><div class="ic br"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4 3 7 8 9 5-2 8-5 8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div><h3>8 · Protect</h3><p>Encrypt, one-tap delete (cascade), consent &amp; residency enforced throughout.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- UZBEK MOAT -->
+<section id="moat">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">5</span> The Uzbek speech workstream (the moat)</h2>
+    <p class="sub">Russian is largely solved. <b>Uzbek is the work — and the work is the moat.</b> A dedicated R&amp;D track from Phase 1: fine-tune, serve in-country, and gate releases on accuracy.</p>
+    <div class="grid g4">
+      <div class="card"><div class="ic bg"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4zM4 7l3-4h10l3 4"/></svg></div><h3>Data</h3><p>UzbekVoice ~1,400h + Common Voice ~265h + USC/FeruzaSpeech; grow with consented in-product data.</p></div>
+      <div class="card"><div class="ic bv"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3"/></svg></div><h3>Model</h3><p>Fine-tune Whisper (medium→large-v3) on Uzbek; beat ~14% WER baseline; add a meeting LM.</p></div>
+      <div class="card"><div class="ic bi"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></div><h3>Serve</h3><p>faster-whisper / CTranslate2 on a Tashkent GPU — residency + amortized cost. Streaming + batch.</p></div>
+      <div class="card"><div class="ic ba"><svg viewBox="0 0 24 24"><path d="M4 18V8M10 18V5M16 18v-7M22 18H2"/></svg></div><h3>Eval harness</h3><p>Held-out RU+UZ sets; track WER, diarization error, latency, $/hr; gate model promotion.</p></div>
+    </div>
+    <div class="callout co-green"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><div><b>Milestones:</b> M1 — eval harness + cloud baseline · mid-M1/M2 — first fine-tuned Uzbek model beating baseline · M2/M3 — in-country serving in production (cloud as fallback). On-device Uzbek is a v2 optimization for capable phones only.</div></div>
+  </div>
+</section>
+
+<!-- DELIVERY -->
+<section id="delivery" style="background:linear-gradient(180deg,#fff,#f6f7fb)">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">6</span> Phased delivery</h2>
+    <p class="sub">Each phase has a gate. The demo is detailed week-by-week; later phases map to the business milestones.</p>
+    <div class="timeline">
+      <div class="phase"><span class="node"></span><div class="when">Weeks 1–4 · Phase 0 — Demo</div><h4>Working demo on off-the-shelf hardware</h4>
+        <p><b>W1:</b> skeleton (Flutter + FastAPI + pgvector + Redis); capture→Yandex STT→transcript; <b>validate RU + UZ accuracy</b> (critical risk).
+        <b>W2:</b> BGE-M3 embeddings→pgvector; ask flow with cited LLM answers; diarization + owner enrollment.
+        <b>W3:</b> daily briefing; minimal UI; privacy basics (encrypt, delete, default-off).
+        <b>W4:</b> reliability/accuracy pass; put it on the investor; instrument; pitch.</p>
+        <span class="gate">Gate: <b>Investor uses it on real meetings and won't give it back.</b></span></div>
+      <div class="phase"><span class="node"></span><div class="when">0–6 months · Phase 1 — v1 + beta</div><h4>Production v1 &amp; private beta</h4><p>In-country infra, auth, multi-tenant, storage lifecycle; IT Park + DB registration; Uzbek STT R&amp;D (harness + first fine-tune); consent/privacy hardened; billing skeleton; hardware design starts; beta 100–500 users.</p><span class="gate">Gate: <b>Users love it; retention signal.</b></span></div>
+      <div class="phase"><span class="node"></span><div class="when">6–12 months · Phase 2 — Launch</div><h4>Public launch</h4><p>Self-hosted Uzbek/Russian STT in production; Payme/Click billing live; first hardware batch + EMC/Uzstandard certs; scale infra; knowledge-graph memory.</p><span class="gate">Gate: <b>Healthy free→paid conversion + month-4 retention.</b></span></div>
+      <div class="phase"><span class="node"></span><div class="when">12–18 months · Phase 3 — Scale</div><h4>Scale &amp; expand</h4><p>Cost/latency optimization; ~$2 personal tier; screen-memory then vision R&amp;D; iOS app; CIS/Turkic expansion prep.</p><span class="gate">Gate: <b>Series-A metrics or break-even.</b></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM + QA -->
+<section id="team">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">7</span> Team, testing &amp; security</h2>
+    <div class="grid g3">
+      <div class="card"><div class="ic bi"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M15 20a5 5 0 0 1 6-4.5"/></svg></div><h3>Team</h3><p><b>Demo:</b> 1–2 backend/full-stack, 1 Flutter, 1 ML (part-time), founder/PM. <b>Post-raise:</b> + mobile lead, backend lead, ML/speech (Uzbek), DevOps, QA, hardware contractor, fractional privacy counsel.</p></div>
+      <div class="card"><div class="ic ba"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg></div><h3>Testing / QA</h3><p>ASR/diarization <b>eval harness</b> (RU+UZ: WER/DER/latency/$) gates releases; budget-Android <b>device matrix</b>; pipeline unit+integration; privacy tests (delete really deletes); load tests pre-launch.</p></div>
+      <div class="card"><div class="ic br"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><h3>Security / privacy</h3><p>TLS + AES-256 at rest; device-auth gating; voice/voiceprints in-country + DB registration; consent log; one-tap cascade delete; secrets in a manager; pen-test before launch.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- RISKS -->
+<section id="risks" style="background:linear-gradient(180deg,#fff,#f6f7fb)">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">8</span> Technical risks &amp; mitigations</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Risk</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr><td><b>Uzbek STT accuracy</b></td><td>Eval harness first; fine-tune on UzbekVoice; Yandex fallback; RU-first for the demo if needed</td></tr>
+          <tr><td><b>Budget phones can't run on-device AI</b></td><td>Process server-side in-country; VAD on phone; usage caps</td></tr>
+          <tr><td><b>Diarization errors erode trust</b></td><td>Best open models + owner voice enrollment + a correction UI</td></tr>
+          <tr><td><b>Cloud cost &gt; revenue</b></td><td>VAD, usage caps, self-hosted STT at scale, store text not audio</td></tr>
+          <tr><td><b>Data-residency compliance</b></td><td>In-country voice store + DB registration; text-only cross-border with consent; self-host LLM option</td></tr>
+          <tr><td><b>Background audio / battery (Android)</b></td><td>Native foreground service; aggressive VAD; field-test real devices</td></tr>
+          <tr><td><b>Scope creep in the 1-month demo</b></td><td>Hold the demo IN/OUT line; cited recall + briefing is enough to win</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- NEXT -->
+<section id="next">
+  <div class="wrap">
+    <h2 class="sec"><span class="num">9</span> Immediate next actions</h2>
+    <div class="card steps-num">
+      <div class="snum"><div class="c"></div><div><p><b>Stand up the repo skeleton</b> (<code>/mobile</code>, <code>/backend</code>, <code>/ml</code>, <code>/infra</code>) + CI.</p></div></div>
+      <div class="snum"><div class="c"></div><div><p><b>Run the RU + UZ transcription accuracy spike</b> on real recordings via Yandex SpeechKit — the single most important Week-1 risk check.</p></div></div>
+      <div class="snum"><div class="c"></div><div><p><b>Wire the thin loop:</b> record → STT → store → embed → ask (LLM) → cited answer.</p></div></div>
+      <div class="snum"><div class="c"></div><div><p><b>Decide demo hardware:</b> open Omi pendant vs phone + clip-on mic.</p></div></div>
+      <div class="snum"><div class="c"></div><div><p><b>Set privacy defaults</b> (encrypt, default-off, delete) in the skeleton from day one.</p></div></div>
+    </div>
+    <div class="callout co-blue" style="margin-top:18px"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></svg><div><b>Ready to start:</b> the repo skeleton + thin end-to-end loop can be scaffolded directly here to kick off Week 1.</div></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div style="font-size:18px;font-weight:800;color:#fff">Omnisense — build the loop once, in Uzbek, in-country, privacy-first.</div>
+    <div>Full detail in the repo: <b>docs/development-plan.md</b> · with <b>business-plan.md</b>, <b>demo-sprint.md</b>, <b>master-plan.md</b>, <b>market-research.md</b>.</div>
+    <div class="note">Compiled May 2026. Tool/model names, costs, the data-localization rules, and Uzbek-STT accuracy are research-backed estimates — verify before relying on them. Legal/privacy content is research synthesis, not legal advice; use licensed Uzbek counsel.</div>
+  </div>
+</footer>
+
+<script>
+  var bar=document.getElementById('progress');
+  function upd(){var h=document.documentElement;var sc=h.scrollTop||document.body.scrollTop;var max=(h.scrollHeight-h.clientHeight)||1;bar.style.width=(sc/max*100)+'%';}
+  document.addEventListener('scroll',upd,{passive:true});upd();
+</script>
+</body>
+</html>
