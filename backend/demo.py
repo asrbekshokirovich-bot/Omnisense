@@ -5,6 +5,17 @@
 Seeds a sample meeting, asks a question, and prints the morning briefing — the exact loop
 the investor demo shows, but in the terminal.
 """
+import sys
+
+# On Windows the default console encoding (cp1251) can't render the citation arrow ↳
+# without crashing. Force UTF-8 on the streams so the demo runs identically across
+# Mac / Linux / Windows. (No effect on already-UTF-8 platforms.)
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, OSError):
+        pass
+
 from app.pipeline import Pipeline
 
 SAMPLE_MEETING = [
