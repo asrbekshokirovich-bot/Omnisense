@@ -54,6 +54,9 @@ class Settings:
     owner_voiceprint_path: str = _env("OMNI_OWNER_VOICEPRINT_PATH", "")
     owner_match_threshold: float = float(_env("OMNI_OWNER_THRESHOLD", "0.7"))
 
+    # Per-tenant consent log (append-only audit trail). Empty path = in-memory only.
+    consent_log_path: str = _env("OMNI_CONSENT_LOG_PATH", "")
+
     # Pyannote (when OMNI_DIARIZER=pyannote) — runtime needs the HF gated-model token.
     hf_token: str = _env("HF_TOKEN") or _env("HUGGING_FACE_HUB_TOKEN")
     diarizer_device: str = _env("OMNI_DIARIZER_DEVICE", "cpu")

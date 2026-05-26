@@ -47,7 +47,22 @@ class _HomeState extends State<Home> {
   Future<void> _loadIdentity() async {
     final t = await TenantIdentity.load();
     if (!mounted) return;
-    setState(() => api = OmniApi(kApiBase, tenantId: t.id));
+    final client = OmniApi(kApiBase, tenantId: t.id);
+    setState(() => api = client);
+    // Best-effort: mirror the local consent record to the backend's audit log so
+    // regulators / the user's "what did I consent to and when?" view sees both copies.
+    // Failures are silent — the on-device consent file remains the source of truth.
+    _syncConsentToBackend(client);
+  }
+
+  Future<void> _syncConsentToBackend(OmniApi client) async {
+    try {
+      final c = await ConsentStore.load();
+      if (c == null) return;
+      await client.recordConsent('recording', c.recording, reason: 'first-launch consent');
+      await client.recordConsent('cross_border_llm', c.crossBorderLLM,
+          reason: 'first-launch consent');
+    } catch (_) {/* offline / backend down — fine, we tried */}
   }
 
   Future<void> _ask() async {

@@ -15,8 +15,10 @@ from __future__ import annotations
 from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
+from pydantic import BaseModel
+
 from . import __version__
-from .pipeline import DEFAULT_TENANT, Pipeline
+from .pipeline import DEFAULT_TENANT, ConsentRequired, Pipeline
 from .schemas import AskRequest, AskResponse, IngestResponse, IngestTextRequest
 
 app = FastAPI(title="Omnisense", version=__version__,
@@ -28,6 +30,32 @@ app.add_middleware(
 )
 
 pipeline = Pipeline()
+
+
+@app.exception_handler(ConsentRequired)
+async def _consent_handler(request, exc: ConsentRequired):
+    """Cross-border provider configured but tenant has not consented. 451 = Unavailable
+    For Legal Reasons — the right code for "we'd serve you, but the law says we can't
+    until you tell us we can." (RFC 7725.)"""
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        status_code=451,
+        content={
+            "error": "consent_required",
+            "scope": exc.scope,
+            "provider": exc.provider,
+            "detail": (
+                f"This call would use the cross-border provider {exc.provider!r}. "
+                f"Grant scope {exc.scope!r} first: POST /consent/{exc.scope} "
+                f"with body {{'granted': true}}."
+            ),
+        },
+    )
+
+
+class ConsentBody(BaseModel):
+    granted: bool
+    reason: str | None = None
 
 
 def _tenant(x_user_id: str | None) -> str:
@@ -115,6 +143,27 @@ def usage(x_user_id: str | None = Header(default=None)) -> dict:
     """Per-tenant counters (segments / questions / briefings / last_active_at). The
     skeleton for the billing + quota story — see app/usage.py."""
     return pipeline.usage.get(_tenant(x_user_id))
+
+
+# ---- consent + region gating -------------------------------------------------
+@app.get("/consent")
+def consent_status(x_user_id: str | None = Header(default=None)) -> dict:
+    """Current consent state per scope + the full append-only audit log.
+    Used by the mobile Settings screen and by anyone exercising rights under
+    Personal-Data Law ZRU-547."""
+    return pipeline.consent(_tenant(x_user_id)).status()
+
+
+@app.post("/consent/{scope}")
+def consent_record(scope: str, body: ConsentBody,
+                   x_user_id: str | None = Header(default=None)) -> dict:
+    """Append a grant or revoke to the consent log. Latest entry wins; older
+    entries are NEVER deleted (audit trail).
+
+    Known scopes: "recording", "cross_border_llm", "cross_border_stt",
+    "background_capture". Unknown scopes are accepted (forward-compatible) but
+    have no enforcement attached."""
+    return pipeline.consent(_tenant(x_user_id)).record(scope, body.granted, body.reason)
 
 
 # ---- owner-voice enrollment --------------------------------------------------

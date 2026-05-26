@@ -43,6 +43,15 @@ class OmniApi {
 
   Future<Map<String, dynamic>> usage() async => _get('/usage');
 
+  /// Record a consent grant or revoke for the caller's tenant. Best-effort: failures
+  /// are swallowed by the mobile layer so the on-device consent file stays the source
+  /// of truth even when the backend is unreachable.
+  Future<Map<String, dynamic>> recordConsent(String scope, bool granted, {String? reason}) async =>
+      _post('/consent/$scope', {
+        'granted': granted,
+        if (reason != null) 'reason': reason,
+      });
+
   Future<Map<String, dynamic>> deleteAll() async {
     final r = await http.delete(Uri.parse('$baseUrl/data'), headers: _headers());
     return jsonDecode(r.body) as Map<String, dynamic>;

@@ -13,6 +13,7 @@ from pathlib import Path
 
 from .chunking import chunk_text
 from .config import Settings, settings
+from .consent import ConsentLog
 from .domain import Segment, Session
 from .owner import OwnerEnrollment
 from .providers import make_diarizer, make_embedding, make_llm, make_stt
@@ -20,6 +21,22 @@ from .store import make_store
 from .usage import UsageMeter
 
 DEFAULT_TENANT = "default"
+
+# Cross-border-LLM providers — these need explicit "cross_border_llm" consent before
+# Pipeline.ask / briefing will invoke them. "mock" stays in-process so it is free.
+_CROSS_BORDER_LLMS = {"anthropic", "openai"}
+_CROSS_BORDER_STT = {"yandex"}
+
+
+class ConsentRequired(PermissionError):
+    """Raised when a cross-border provider is configured but the tenant has not granted
+    the matching consent scope. The API layer turns this into a 451 (Unavailable For
+    Legal Reasons)."""
+
+    def __init__(self, scope: str, provider: str) -> None:
+        super().__init__(f"consent scope {scope!r} required for provider {provider!r}")
+        self.scope = scope
+        self.provider = provider
 
 
 class Pipeline:
@@ -31,8 +48,9 @@ class Pipeline:
         self.store = make_store(s, dim=self.embed.dim)
         self.diarizer = make_diarizer(s)
         self.usage = UsageMeter()
-        # One OwnerEnrollment per tenant — cached lazily on first access.
+        # One OwnerEnrollment + one ConsentLog per tenant — cached lazily.
         self._owners: dict[str, OwnerEnrollment] = {}
+        self._consent: dict[str, ConsentLog] = {}
 
     # ---- per-tenant owner-enrollment ----------------------------------------
     def owner(self, tenant_id: str = DEFAULT_TENANT) -> OwnerEnrollment:
@@ -55,9 +73,36 @@ class Pipeline:
         # cannot collide. Plain filename ("owner.json") → "owner.default.json".
         return str(p.with_name(f"{p.stem}.{tenant_id}{p.suffix or '.json'}"))
 
+    # ---- per-tenant consent log ---------------------------------------------
+    def consent(self, tenant_id: str = DEFAULT_TENANT) -> ConsentLog:
+        c = self._consent.get(tenant_id)
+        if c is None:
+            c = ConsentLog(path=self._consent_path(tenant_id))
+            self._consent[tenant_id] = c
+        return c
+
+    def _consent_path(self, tenant_id: str) -> str | None:
+        base = self.settings.consent_log_path
+        if not base:
+            return None
+        p = Path(base)
+        return str(p.with_name(f"{p.stem}.{tenant_id}{p.suffix or '.json'}"))
+
+    # ---- region gate --------------------------------------------------------
+    def _require_consent_for_llm(self, tenant_id: str) -> None:
+        if self.settings.llm_provider in _CROSS_BORDER_LLMS:
+            if not self.consent(tenant_id).is_granted("cross_border_llm"):
+                raise ConsentRequired("cross_border_llm", self.settings.llm_provider)
+
+    def _require_consent_for_stt(self, tenant_id: str) -> None:
+        if self.settings.stt_provider in _CROSS_BORDER_STT:
+            if not self.consent(tenant_id).is_granted("cross_border_stt"):
+                raise ConsentRequired("cross_border_stt", self.settings.stt_provider)
+
     # ---- ingest -------------------------------------------------------------
     def ingest_audio(self, audio: bytes, lang: str, source: str = "upload",
                      tenant_id: str = DEFAULT_TENANT) -> Session:
+        self._require_consent_for_stt(tenant_id)
         stt_segments = self.stt.transcribe(audio, lang)
         if self.diarizer is not None and stt_segments:
             stt_segments = self._relabel_with_diarizer(stt_segments, audio, tenant_id)
@@ -153,6 +198,7 @@ class Pipeline:
         since: float | None = None,
         until: float | None = None,
     ) -> dict:
+        self._require_consent_for_llm(tenant_id)
         lang = lang or self.settings.default_lang
         query_vec = self.embed.embed([question])[0]
         # `lang` controls the LLM reply language; we do NOT use it as a recall filter,
@@ -168,6 +214,7 @@ class Pipeline:
         return {"question": question, "answer": answer, "citations": context}
 
     def briefing(self, lang: str | None = None, *, tenant_id: str = DEFAULT_TENANT) -> dict:
+        self._require_consent_for_llm(tenant_id)
         lang = lang or self.settings.default_lang
         segments = [s.citation() for s in self.store.all_segments(tenant_id)]
         result = self.llm.summarize_day(segments, lang)
