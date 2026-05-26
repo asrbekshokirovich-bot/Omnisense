@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .billing import SubscriptionStore, make_billing
 from .chunking import chunk_text
 from .config import Settings, settings
 from .consent import ConsentLog
@@ -48,6 +49,8 @@ class Pipeline:
         self.store = make_store(s, dim=self.embed.dim)
         self.diarizer = make_diarizer(s)
         self.usage = UsageMeter()
+        self.subscriptions = SubscriptionStore()
+        self.billing = make_billing(s)
         # One OwnerEnrollment + one ConsentLog per tenant — cached lazily.
         self._owners: dict[str, OwnerEnrollment] = {}
         self._consent: dict[str, ConsentLog] = {}

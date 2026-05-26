@@ -58,6 +58,11 @@ class ConsentBody(BaseModel):
     reason: str | None = None
 
 
+class SubscribeBody(BaseModel):
+    plan: str
+    annual: bool = False
+
+
 def _tenant(x_user_id: str | None) -> str:
     """Coerce the X-User-Id header into a tenant_id. Empty / missing → "default".
 
@@ -164,6 +169,60 @@ def consent_record(scope: str, body: ConsentBody,
     "background_capture". Unknown scopes are accepted (forward-compatible) but
     have no enforcement attached."""
     return pipeline.consent(_tenant(x_user_id)).record(scope, body.granted, body.reason)
+
+
+# ---- billing -----------------------------------------------------------------
+@app.get("/billing")
+def billing_status(x_user_id: str | None = Header(default=None)) -> dict:
+    """Current subscription state for the caller + the plan catalog (so the mobile
+    Settings screen can render prices without baking them in)."""
+    from .billing import PLAN_CATALOG
+    sub = pipeline.subscriptions.get(_tenant(x_user_id))
+    return {"subscription": sub.to_dict(), "catalog": PLAN_CATALOG}
+
+
+@app.post("/billing/start-trial")
+def billing_start_trial(x_user_id: str | None = Header(default=None)) -> dict:
+    """Activate the 90-day free trial. Idempotent — calling twice is a no-op."""
+    return pipeline.subscriptions.start_trial(_tenant(x_user_id)).to_dict()
+
+
+@app.post("/billing/subscribe")
+def billing_subscribe(body: SubscribeBody,
+                      x_user_id: str | None = Header(default=None)) -> dict:
+    """Begin a paid subscription. Returns the next client action (typically a
+    redirect to the provider's hosted checkout). The actual activation happens when
+    the provider POSTs back to /billing/webhook/{provider}."""
+    from .billing import PLAN_CATALOG
+    if body.plan not in PLAN_CATALOG:
+        raise HTTPException(status_code=400, detail=f"unknown plan: {body.plan!r}")
+    return pipeline.billing.create_payment(
+        plan=body.plan, tenant_id=_tenant(x_user_id), annual=body.annual,
+    )
+
+
+@app.post("/billing/webhook/{provider}")
+async def billing_webhook(provider: str, body: dict) -> dict:
+    """Provider-callback endpoint. The (mock) provider POSTs the completion event;
+    the real Payme / Click adapters will additionally verify a signature header
+    before reaching this code path. Maps the event to a Subscription state change."""
+    if pipeline.billing.name != provider:
+        raise HTTPException(
+            status_code=400,
+            detail=f"this server is configured for billing {pipeline.billing.name!r}, "
+                   f"got webhook for {provider!r}",
+        )
+    parsed = pipeline.billing.handle_webhook(body)
+    if parsed["verb"] == "paid":
+        sub = pipeline.subscriptions.activate(
+            parsed["tenant_id"], parsed["plan"], provider=provider,
+            annual=bool(body.get("annual", False)),
+        )
+    elif parsed["verb"] == "failed":
+        sub = pipeline.subscriptions.mark_past_due(parsed["tenant_id"])
+    else:
+        raise HTTPException(status_code=400, detail=f"unknown webhook verb: {parsed['verb']!r}")
+    return {"ok": True, "subscription": sub.to_dict()}
 
 
 # ---- owner-voice enrollment --------------------------------------------------

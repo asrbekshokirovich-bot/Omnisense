@@ -57,6 +57,10 @@ class Settings:
     # Per-tenant consent log (append-only audit trail). Empty path = in-memory only.
     consent_log_path: str = _env("OMNI_CONSENT_LOG_PATH", "")
 
+    # Billing provider (mock for Phase 0; payme/click adapters land with merchant
+    # contracts). See app/billing.py + app/providers/billing_*.py.
+    billing_provider: str = _env("OMNI_BILLING", "mock")  # mock | payme | click
+
     # Pyannote (when OMNI_DIARIZER=pyannote) — runtime needs the HF gated-model token.
     hf_token: str = _env("HF_TOKEN") or _env("HUGGING_FACE_HUB_TOKEN")
     diarizer_device: str = _env("OMNI_DIARIZER_DEVICE", "cpu")
