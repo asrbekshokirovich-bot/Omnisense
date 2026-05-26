@@ -6,10 +6,29 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 
 def _env(key: str, default: str = "") -> str:
     return os.environ.get(key, default).strip()
+
+
+def _load_dotenv() -> None:
+    """Load a local .env (backend/.env or cwd/.env) without overriding real env vars.
+    Pure stdlib — no dependency. Runs before Settings is defined so field defaults see it."""
+    for path in (Path.cwd() / ".env", Path(__file__).resolve().parent.parent / ".env"):
+        if not path.is_file():
+            continue
+        for raw in path.read_text(encoding="utf-8").splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, val = line.split("=", 1)
+            os.environ.setdefault(key.strip(), val.strip().strip('"').strip("'"))
+        break
+
+
+_load_dotenv()
 
 
 @dataclass(frozen=True)
