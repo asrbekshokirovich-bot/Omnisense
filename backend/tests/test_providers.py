@@ -31,6 +31,7 @@ def _capture(payload):
 
 # ---- Yandex STT ----------------------------------------------------------
 def test_yandex_stt_request_and_parse(monkeypatch):
+    """Short-audio synchronous path (the demo's bread and butter)."""
     fake, calls = _capture({"result": "salom dunyo"})
     monkeypatch.setattr(httpx, "post", fake)
     from app.providers.yandex_stt import YandexSTT
@@ -41,8 +42,51 @@ def test_yandex_stt_request_and_parse(monkeypatch):
     assert calls["url"].endswith("stt:recognize")
     assert calls["kw"]["params"]["lang"] == "uz-UZ"
     assert calls["kw"]["params"]["folderId"] == "folder42"
+    assert calls["kw"]["params"]["format"] == "oggopus"
     assert calls["kw"]["headers"]["Authorization"] == "Api-Key key123"
     assert calls["kw"]["content"] == b"audio-bytes"
+
+
+def test_yandex_stt_async_path_for_long_audio(monkeypatch):
+    """Long-audio path: submit (POST) → poll until done (GET) → parse speaker-labeled
+    chunks. We size the input above the sync threshold and stub both verbs."""
+    from app.providers import yandex_stt as ystt_mod
+
+    big_audio = b"x" * (1_000_000)  # > 900 KB → async path
+    posts: list[dict] = []
+    gets: list[dict] = []
+
+    def fake_post(url, **kw):
+        posts.append({"url": url, "kw": kw})
+        return FakeResp({"id": "op-42"})  # operation submission ack
+
+    def fake_get(url, **kw):
+        gets.append({"url": url, "kw": kw})
+        return FakeResp({
+            "done": True,
+            "response": {"chunks": [
+                {"alternatives": [{"text": "первая реплика"}],
+                 "startTime": "0.000s", "endTime": "5.500s", "speakerTag": "1"},
+                {"alternatives": [{"text": "второй спикер"}],
+                 "startTime": "5.500s", "endTime": "10.000s", "speakerTag": "2"},
+            ]},
+        })
+
+    monkeypatch.setattr(ystt_mod, "time", type("T", (), {"monotonic": staticmethod(lambda: 0.0),
+                                                          "sleep": staticmethod(lambda _t: None)}))
+    import httpx
+    monkeypatch.setattr(httpx, "post", fake_post)
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    from app.providers.yandex_stt import YandexSTT
+    segs = YandexSTT("sk", "folder42", poll_interval_s=0.0).transcribe(big_audio, "ru")
+
+    assert [s["text"] for s in segs] == ["первая реплика", "второй спикер"]
+    assert segs[0]["start_ms"] == 0 and segs[0]["end_ms"] == 5500
+    assert segs[1]["speaker"] == "speaker_2"
+    # The submission hit the long-running endpoint, the poll hit the operations API.
+    assert posts and posts[0]["url"].endswith("longRunningRecognize")
+    assert gets and "operations/op-42" in gets[0]["url"]
 
 
 # ---- OpenAI-compatible ---------------------------------------------------

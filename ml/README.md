@@ -2,20 +2,38 @@
 
 Home of the **Uzbek/Russian speech-to-text workstream** (the moat) and its eval harness.
 
-## WER eval harness (the Week-1 risk check)
+## WER + CER eval harness (the Week-1 risk check)
 The single most important early check: *how good is Uzbek/Russian transcription?* Produce
-`{ref, hyp, lang}` rows from any STT model (cloud Yandex now, self-hosted fine-tuned Whisper
-later) and score them:
+`{ref, hyp, lang}` rows from any STT model, or point the harness at a directory of audio
+and let it call the provider for you, then score.
+
 ```bash
 cd ml/eval
-python run_eval.py                 # bundled RU/UZ samples
-python run_eval.py mydata.jsonl    # your model's outputs
-```
-Output is per-language average **WER** — the gate for promoting any STT model.
 
-Dataset format (JSONL, one row per utterance):
+# Bundled RU/UZ samples (pre-transcribed).
+python run_eval.py
+
+# Your own pre-transcribed file.
+python run_eval.py --dataset mydata.jsonl
+
+# Actually run Yandex on real Uzbek audio. Needs YANDEX_API_KEY in env.
+python run_eval.py --dataset uz_audio.jsonl --audio-dir ./audio --provider yandex
+
+# Compare providers side-by-side; emit JSON for CI / dashboards.
+python run_eval.py --provider yandex --provider mock --json > scores.json
+
+# Test the harness itself.
+python -m pytest -q
+```
+
+Output is per-language **WER** and **CER**. CER protects against Uzbek-morphology misses
+that look small at the character level but flip a whole word at WER (e.g. *kelishdik* vs
+*keldik*). Both metrics gate any STT promotion.
+
+Dataset formats (JSONL, one row per utterance):
 ```json
 {"lang": "uz", "ref": "ground truth transcript", "hyp": "model output"}
+{"lang": "uz", "ref": "ground truth transcript", "audio": "clip01.ogg"}
 ```
 
 ## Roadmap (per docs/development-plan.md §6)
