@@ -6,7 +6,7 @@ Run: `uvicorn app.main:app --reload` (offline mock providers by default).
 """
 from __future__ import annotations
 
-from fastapi import FastAPI, File, Form, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import __version__
@@ -66,3 +66,31 @@ def sessions() -> dict:
 @app.delete("/data")
 def delete_all() -> dict:
     return {"deleted_segments": pipeline.delete_all()}
+
+
+# ---- owner-voice enrollment --------------------------------------------------
+# Voiceprint stays local (residency-compliant). The reference clip is consumed to compute
+# the embedding and then dropped — we never store raw enrollment audio.
+@app.get("/enroll/owner")
+def enroll_status() -> dict:
+    return pipeline.owner.status()
+
+
+@app.post("/enroll/owner")
+async def enroll_owner(file: UploadFile = File(...)) -> dict:
+    if pipeline.diarizer is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Owner enrollment requires a diarizer. Set OMNI_DIARIZER=mock|pyannote.",
+        )
+    audio = await file.read()
+    voiceprint = pipeline.diarizer.embed_voice(audio)
+    if not voiceprint:
+        raise HTTPException(status_code=400, detail="Could not embed the reference clip.")
+    return pipeline.owner.enroll([voiceprint])
+
+
+@app.delete("/enroll/owner")
+def enroll_clear() -> dict:
+    pipeline.owner.clear()
+    return {"enrolled": False}

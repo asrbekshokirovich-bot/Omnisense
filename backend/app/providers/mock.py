@@ -14,7 +14,7 @@ import hashlib
 import math
 import re
 
-from .base import EmbeddingProvider, LLMProvider, STTProvider
+from .base import Diarizer, EmbeddingProvider, LLMProvider, STTProvider
 
 _TOKEN = re.compile(r"\w+", re.UNICODE)
 _ACTION_HINTS = (
@@ -107,3 +107,67 @@ class MockLLM(LLMProvider):
 
 def _t(lang: str, *, en: str, ru: str, uz: str) -> str:
     return {"ru": ru, "uz": uz}.get((lang or "").lower(), en)
+
+
+_MOCK_VOICEPRINT_DIM = 64
+
+
+def _mock_voiceprint(seed: str, dim: int = _MOCK_VOICEPRINT_DIM) -> list[float]:
+    """Deterministic unit-norm voiceprint from a seed string.
+
+    Same-seed → identical vector → mock diarization is reproducible, and the owner-
+    enrollment cosine check actually discriminates the seeded speakers.
+    """
+    vec = [0.0] * dim
+    for i, byte in enumerate(hashlib.sha256(seed.encode("utf-8")).digest()):
+        vec[i % dim] += (byte / 127.5) - 1.0
+    norm = math.sqrt(sum(x * x for x in vec)) or 1.0
+    return [x / norm for x in vec]
+
+
+class MockDiarizer(Diarizer):
+    """Offline diarizer for tests + the demo. Treats the audio bytes as UTF-8 text where
+    each non-empty line is a turn. Alternates SPEAKER_00 / SPEAKER_01.
+
+    For owner enrollment to be testable end-to-end, the voiceprint of a speaker is the
+    hash of that speaker's FIRST turn — and `embed_voice(reference_clip)` is the hash of
+    the reference clip's first line. So if the user enrolls by uploading a clip whose
+    first line matches the first line spoken by SPEAKER_00 in a meeting, the cosine match
+    snaps to 1.0 and SPEAKER_00 → owner. Real diarization is pyannote.
+    """
+
+    @property
+    def dim(self) -> int:
+        return _MOCK_VOICEPRINT_DIM
+
+    def diarize(self, audio: bytes) -> list[dict]:
+        try:
+            text = audio.decode("utf-8")
+        except UnicodeDecodeError:
+            return []
+        lines = [l.strip() for l in text.splitlines() if l.strip()]
+        if not lines:
+            return []
+        # First-turn-per-speaker seeds each speaker's voiceprint.
+        seed: dict[str, str] = {}
+        turns: list[dict] = []
+        t = 0
+        speakers = ("SPEAKER_00", "SPEAKER_01")
+        for i, line in enumerate(lines):
+            label = speakers[i % 2]
+            seed.setdefault(label, line)
+            turns.append({
+                "start_ms": t,
+                "end_ms": t + 6000,
+                "speaker_label": label,
+                "voiceprint": _mock_voiceprint(seed[label]),
+            })
+            t += 6000
+        return turns
+
+    def embed_voice(self, audio: bytes) -> list[float]:
+        """Voiceprint of a reference clip — seeded from its first non-empty line so it
+        matches a diarized speaker who opens a meeting with that same utterance."""
+        text = audio.decode("utf-8", errors="ignore")
+        first = next((l.strip() for l in text.splitlines() if l.strip()), "anon")
+        return _mock_voiceprint(first)

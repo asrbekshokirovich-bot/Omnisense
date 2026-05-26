@@ -38,6 +38,7 @@ class Settings:
     embed_provider: str = _env("OMNI_EMBED", "mock")      # mock | openai | local
     llm_provider: str = _env("OMNI_LLM", "mock")          # mock | anthropic | openai
     store_backend: str = _env("OMNI_STORE", "memory")     # memory | pgvector
+    diarizer_provider: str = _env("OMNI_DIARIZER", "off") # off | mock | pyannote
 
     # Sizes the mock vector and the OpenAI-compatible vector. The `local` provider reports
     # its own dim from the loaded model (BGE-M3=1024, multilingual-e5-large=1024, etc).
@@ -48,6 +49,14 @@ class Settings:
     # Local sentence-transformers embedder (in-country, no cross-border data path).
     local_embed_model: str = _env("OMNI_LOCAL_EMBED_MODEL", "BAAI/bge-m3")
     local_embed_device: str = _env("OMNI_LOCAL_EMBED_DEVICE", "cpu")
+
+    # Owner-voice enrollment (centroid voiceprint stored locally; empty path = in-memory).
+    owner_voiceprint_path: str = _env("OMNI_OWNER_VOICEPRINT_PATH", "")
+    owner_match_threshold: float = float(_env("OMNI_OWNER_THRESHOLD", "0.7"))
+
+    # Pyannote (when OMNI_DIARIZER=pyannote) — runtime needs the HF gated-model token.
+    hf_token: str = _env("HF_TOKEN") or _env("HUGGING_FACE_HUB_TOKEN")
+    diarizer_device: str = _env("OMNI_DIARIZER_DEVICE", "cpu")
 
     # Real-provider credentials / endpoints (only used when the matching provider is selected).
     yandex_api_key: str = _env("YANDEX_API_KEY")

@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 from ..config import Settings
-from .base import EmbeddingProvider, LLMProvider, STTProvider
-from .mock import HashingEmbedding, MockLLM, MockSTT
+from .base import Diarizer, EmbeddingProvider, LLMProvider, STTProvider
+from .mock import HashingEmbedding, MockDiarizer, MockLLM, MockSTT
 
 
 def make_stt(s: Settings) -> STTProvider:
@@ -33,3 +33,17 @@ def make_llm(s: Settings) -> LLMProvider:
         from .llm_openai import OpenAILLM
         return OpenAILLM(s.openai_api_key, s.openai_base_url, s.openai_chat_model)
     return MockLLM()
+
+
+def make_diarizer(s: Settings) -> Diarizer | None:
+    """Return the configured diarizer, or None when diarization is disabled (default).
+
+    None means the pipeline keeps STT's own speaker labels — exactly the pre-task-2
+    behavior. The offline tests run with the mock diarizer.
+    """
+    if s.diarizer_provider == "mock":
+        return MockDiarizer()
+    if s.diarizer_provider == "pyannote":
+        from .diarize_pyannote import PyannoteDiarizer
+        return PyannoteDiarizer(s.hf_token, s.diarizer_device)
+    return None

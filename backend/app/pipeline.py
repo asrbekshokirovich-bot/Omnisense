@@ -1,4 +1,4 @@
-"""The thin loop: ingest -> transcribe -> chunk -> embed -> store -> ask / brief.
+"""The thin loop: ingest -> transcribe -> diarize -> chunk -> embed -> store -> ask / brief.
 
 Providers and the store are injected, so the same pipeline runs offline (mock + in-memory)
 for the demo and in production (Yandex/self-hosted STT + pgvector) by changing env only.
@@ -8,7 +8,8 @@ from __future__ import annotations
 from .chunking import chunk_text
 from .config import Settings, settings
 from .domain import Segment, Session
-from .providers import make_embedding, make_llm, make_stt
+from .owner import OwnerEnrollment
+from .providers import make_diarizer, make_embedding, make_llm, make_stt
 from .store import make_store
 
 
@@ -19,11 +20,64 @@ class Pipeline:
         self.embed = make_embedding(s)
         self.llm = make_llm(s)
         self.store = make_store(s, dim=self.embed.dim)
+        self.diarizer = make_diarizer(s)
+        self.owner = OwnerEnrollment(
+            path=s.owner_voiceprint_path or None,
+            threshold=s.owner_match_threshold,
+        )
 
     # ---- ingest -------------------------------------------------------------
     def ingest_audio(self, audio: bytes, lang: str, source: str = "upload") -> Session:
         stt_segments = self.stt.transcribe(audio, lang)
+        if self.diarizer is not None and stt_segments:
+            stt_segments = self._relabel_with_diarizer(stt_segments, audio)
         return self._store_segments(stt_segments, lang, source)
+
+    def _relabel_with_diarizer(self, stt_segments: list[dict], audio: bytes) -> list[dict]:
+        """Replace each STT segment's speaker with the diarizer's label for the same time
+        window; map diarizer labels to "owner" when an enrolled voiceprint matches.
+
+        STT (e.g. Yandex short-audio) often returns no diarization at all, so we trust
+        the diarizer's own turn boundaries when STT has none. When STT does have its own
+        timing, we attribute each STT segment to the diarizer turn it overlaps most.
+        """
+        turns = self.diarizer.diarize(audio)
+        if not turns:
+            return stt_segments
+
+        # Decide "owner" label per diarizer speaker_label, using the average voiceprint.
+        label_to_voiceprints: dict[str, list[list[float]]] = {}
+        for t in turns:
+            label_to_voiceprints.setdefault(t["speaker_label"], []).append(t["voiceprint"])
+        label_name: dict[str, str] = {}
+        owner_seen = False
+        other_idx = 0
+        for label, vecs in label_to_voiceprints.items():
+            centroid = [sum(col) / len(vecs) for col in zip(*vecs)] if vecs else []
+            if self.owner.is_owner(centroid) and not owner_seen:
+                label_name[label] = "owner"
+                owner_seen = True
+            else:
+                label_name[label] = f"other_{other_idx}" if other_idx else "other"
+                other_idx += 1
+
+        def overlap(a_start: int, a_end: int, b_start: int, b_end: int) -> int:
+            return max(0, min(a_end, b_end) - max(a_start, b_start))
+
+        out: list[dict] = []
+        for seg in stt_segments:
+            seg_start = int(seg.get("start_ms", 0))
+            seg_end = int(seg.get("end_ms", seg_start + 6000))
+            best = max(
+                turns,
+                key=lambda t: overlap(seg_start, seg_end, t["start_ms"], t["end_ms"]),
+                default=None,
+            )
+            new = dict(seg)
+            if best is not None and overlap(seg_start, seg_end, best["start_ms"], best["end_ms"]) > 0:
+                new["speaker"] = label_name[best["speaker_label"]]
+            out.append(new)
+        return out
 
     def ingest_text(self, text: str, lang: str, source: str = "text", speaker: str = "owner") -> Session:
         # Pre-transcribed text path (used by the web demo and tests).
