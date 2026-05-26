@@ -119,7 +119,7 @@ def test_pipeline_applies_owner_label_after_enrollment(tmp_path):
 
     # Enroll with the first speaker's opening line.
     voice = p.diarizer.embed_voice(b"Bugun mijoz bilan demo haqida gaplashdik.")
-    p.owner.enroll([voice])
+    p.owner("default").enroll([voice])
 
     # Ingest a "meeting" — MockSTT line-splits, MockDiarizer alternates SPEAKER_00/01.
     transcript = (
@@ -128,7 +128,7 @@ def test_pipeline_applies_owner_label_after_enrollment(tmp_path):
         "Narxni keyinroq hal qilamiz."
     )
     p.ingest_audio(transcript.encode("utf-8"), lang="uz")
-    speakers = [s.speaker for s in p.store.all_segments()]
+    speakers = [s.speaker for s in p.store.all_segments("default")]
     assert "owner" in speakers
     assert speakers.count("owner") == 2          # lines 1 and 3 are SPEAKER_00 → owner
     assert all(s != "SPEAKER_00" for s in speakers)  # raw label was replaced
@@ -143,7 +143,7 @@ def test_pipeline_default_off_preserves_stt_speakers():
     p = Pipeline(Settings(diarizer_provider="off"))
     p.delete_all()
     p.ingest_audio(b"line one\nline two", lang="en")
-    speakers = {s.speaker for s in p.store.all_segments()}
+    speakers = {s.speaker for s in p.store.all_segments("default")}
     # MockSTT labels alternate owner / speaker_2.
     assert speakers == {"owner", "speaker_2"}
 
@@ -155,7 +155,7 @@ def test_pipeline_diarizer_no_owner_uses_other_label():
     p = Pipeline(Settings(diarizer_provider="mock"))
     p.delete_all()
     p.ingest_audio(b"line one\nline two", lang="en")
-    speakers = {s.speaker for s in p.store.all_segments()}
+    speakers = {s.speaker for s in p.store.all_segments("default")}
     # With diarization on but no enrollment: labels become other / other_1 (no "owner").
     assert "owner" not in speakers
     assert any(s.startswith("other") for s in speakers)

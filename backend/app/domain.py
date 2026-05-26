@@ -19,6 +19,7 @@ class Segment:
     start_ms: int = 0
     end_ms: int = 0
     lang: str = "ru"
+    tenant_id: str = "default"
     id: str = field(default_factory=_id)
     created_at: float = field(default_factory=time.time)
     embedding: list[float] = field(default_factory=list)
@@ -39,6 +40,7 @@ class Session:
     """One capture (a meeting, a conversation)."""
     source: str = "demo"
     lang: str = "ru"
+    tenant_id: str = "default"
     id: str = field(default_factory=_id)
     created_at: float = field(default_factory=time.time)
 

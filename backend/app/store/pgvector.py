@@ -41,19 +41,33 @@ class PgVectorStore(MemoryStore):
             cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
             cur.execute(
                 "CREATE TABLE IF NOT EXISTS sessions ("
-                "id TEXT PRIMARY KEY, source TEXT, lang TEXT, created_at DOUBLE PRECISION)"
+                "id TEXT PRIMARY KEY, source TEXT, lang TEXT, tenant_id TEXT NOT NULL "
+                "DEFAULT 'default', created_at DOUBLE PRECISION)"
             )
             cur.execute(
                 "CREATE TABLE IF NOT EXISTS segments ("
                 "id TEXT PRIMARY KEY, session_id TEXT, speaker TEXT, text TEXT, lang TEXT, "
+                "tenant_id TEXT NOT NULL DEFAULT 'default', "
                 "start_ms INT, end_ms INT, created_at DOUBLE PRECISION, "
                 f"embedding vector({self.dim}))"
+            )
+            # Idempotent ALTERs for in-place upgrades from pre-task-5 schemas.
+            cur.execute(
+                "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS tenant_id TEXT NOT NULL "
+                "DEFAULT 'default'"
+            )
+            cur.execute(
+                "ALTER TABLE segments ADD COLUMN IF NOT EXISTS tenant_id TEXT NOT NULL "
+                "DEFAULT 'default'"
             )
             cur.execute(
                 "CREATE INDEX IF NOT EXISTS segments_embedding_idx "
                 "ON segments USING hnsw (embedding vector_cosine_ops)"
             )
-            # Cheap indexes for the metadata filters in search().
+            # Cheap indexes for the metadata filters in search(). Tenant is on every read.
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS segments_tenant_idx ON segments (tenant_id)"
+            )
             cur.execute(
                 "CREATE INDEX IF NOT EXISTS segments_session_idx ON segments (session_id)"
             )
@@ -62,6 +76,9 @@ class PgVectorStore(MemoryStore):
             )
             cur.execute(
                 "CREATE INDEX IF NOT EXISTS segments_created_idx ON segments (created_at)"
+            )
+            cur.execute(
+                "CREATE INDEX IF NOT EXISTS sessions_tenant_idx ON sessions (tenant_id)"
             )
 
     def _guard_dim(self) -> None:
@@ -95,19 +112,20 @@ class PgVectorStore(MemoryStore):
     def add_session(self, session: Session) -> None:
         with self.conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO sessions (id, source, lang, created_at) VALUES (%s,%s,%s,%s) "
-                "ON CONFLICT (id) DO NOTHING",
-                (session.id, session.source, session.lang, session.created_at),
+                "INSERT INTO sessions (id, source, lang, tenant_id, created_at) "
+                "VALUES (%s,%s,%s,%s,%s) ON CONFLICT (id) DO NOTHING",
+                (session.id, session.source, session.lang, session.tenant_id, session.created_at),
             )
 
     def add_segments(self, segments: list[Segment]) -> None:
         with self.conn.cursor() as cur:
             for s in segments:
                 cur.execute(
-                    "INSERT INTO segments (id, session_id, speaker, text, lang, start_ms, "
-                    "end_ms, created_at, embedding) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-                    (s.id, s.session_id, s.speaker, s.text, s.lang, s.start_ms, s.end_ms,
-                     s.created_at, _vec(s.embedding)),
+                    "INSERT INTO segments (id, session_id, speaker, text, lang, tenant_id, "
+                    "start_ms, end_ms, created_at, embedding) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                    (s.id, s.session_id, s.speaker, s.text, s.lang, s.tenant_id,
+                     s.start_ms, s.end_ms, s.created_at, _vec(s.embedding)),
                 )
 
     def search(
@@ -115,13 +133,14 @@ class PgVectorStore(MemoryStore):
         query_vec: list[float],
         top_k: int,
         *,
+        tenant_id: str,
         lang: str | None = None,
         session_id: str | None = None,
         since: float | None = None,
         until: float | None = None,
     ) -> list[tuple[Segment, float]]:
-        where: list[str] = []
-        params: list = [_vec(query_vec)]  # the score expression's vector
+        where: list[str] = ["tenant_id = %s"]
+        params: list = [_vec(query_vec), tenant_id]
         if lang is not None:
             where.append("lang = %s"); params.append(lang)
         if session_id is not None:
@@ -130,13 +149,13 @@ class PgVectorStore(MemoryStore):
             where.append("created_at >= %s"); params.append(since)
         if until is not None:
             where.append("created_at <= %s"); params.append(until)
-        where_sql = (" WHERE " + " AND ".join(where)) if where else ""
+        where_sql = " WHERE " + " AND ".join(where)
         params.append(_vec(query_vec))  # the ORDER BY vector
         params.append(top_k)
         with self.conn.cursor() as cur:
             cur.execute(
-                "SELECT id, session_id, speaker, text, lang, start_ms, end_ms, created_at, "
-                "1 - (embedding <=> %s) AS score FROM segments"
+                "SELECT id, session_id, speaker, text, lang, tenant_id, start_ms, end_ms, "
+                "created_at, 1 - (embedding <=> %s) AS score FROM segments"
                 f"{where_sql} ORDER BY embedding <=> %s LIMIT %s",
                 tuple(params),
             )
@@ -144,33 +163,50 @@ class PgVectorStore(MemoryStore):
         out: list[tuple[Segment, float]] = []
         for r in rows:
             out.append((Segment(id=r[0], session_id=r[1], speaker=r[2], text=r[3], lang=r[4],
-                                 start_ms=r[5], end_ms=r[6], created_at=r[7]), float(r[8])))
+                                 tenant_id=r[5], start_ms=r[6], end_ms=r[7],
+                                 created_at=r[8]), float(r[9])))
         return out
 
-    def list_sessions(self) -> list[Session]:
+    def list_sessions(self, tenant_id: str) -> list[Session]:
         with self.conn.cursor() as cur:
-            cur.execute("SELECT id, source, lang, created_at FROM sessions ORDER BY created_at DESC")
-            return [Session(id=r[0], source=r[1], lang=r[2], created_at=r[3]) for r in cur.fetchall()]
+            cur.execute(
+                "SELECT id, source, lang, tenant_id, created_at FROM sessions "
+                "WHERE tenant_id = %s ORDER BY created_at DESC",
+                (tenant_id,),
+            )
+            return [Session(id=r[0], source=r[1], lang=r[2], tenant_id=r[3], created_at=r[4])
+                    for r in cur.fetchall()]
 
-    def all_segments(self) -> list[Segment]:
+    def all_segments(self, tenant_id: str) -> list[Segment]:
         with self.conn.cursor() as cur:
-            cur.execute("SELECT id, session_id, speaker, text, lang, start_ms, end_ms, created_at FROM segments")
+            cur.execute(
+                "SELECT id, session_id, speaker, text, lang, tenant_id, start_ms, end_ms, "
+                "created_at FROM segments WHERE tenant_id = %s",
+                (tenant_id,),
+            )
             return [Segment(id=r[0], session_id=r[1], speaker=r[2], text=r[3], lang=r[4],
-                            start_ms=r[5], end_ms=r[6], created_at=r[7]) for r in cur.fetchall()]
+                            tenant_id=r[5], start_ms=r[6], end_ms=r[7], created_at=r[8])
+                    for r in cur.fetchall()]
 
-    def delete_all(self) -> int:
+    def delete_all(self, tenant_id: str) -> int:
         with self.conn.cursor() as cur:
-            cur.execute("SELECT count(*) FROM segments")
+            cur.execute("SELECT count(*) FROM segments WHERE tenant_id = %s", (tenant_id,))
             n = cur.fetchone()[0]
-            cur.execute("DELETE FROM segments")
-            cur.execute("DELETE FROM sessions")
+            cur.execute("DELETE FROM segments WHERE tenant_id = %s", (tenant_id,))
+            cur.execute("DELETE FROM sessions WHERE tenant_id = %s", (tenant_id,))
         return int(n)
 
-    def delete_session(self, session_id: str) -> int:
+    def delete_session(self, session_id: str, tenant_id: str) -> int:
         with self.conn.cursor() as cur:
-            cur.execute("DELETE FROM segments WHERE session_id = %s", (session_id,))
+            cur.execute(
+                "DELETE FROM segments WHERE session_id = %s AND tenant_id = %s",
+                (session_id, tenant_id),
+            )
             removed = cur.rowcount
-            cur.execute("DELETE FROM sessions WHERE id = %s", (session_id,))
+            cur.execute(
+                "DELETE FROM sessions WHERE id = %s AND tenant_id = %s",
+                (session_id, tenant_id),
+            )
         return int(removed)
 
 

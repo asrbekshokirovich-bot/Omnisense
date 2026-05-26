@@ -1,5 +1,5 @@
 """In-memory store with pure-Python cosine search. Default backend — runs with zero infra,
-ideal for the demo and tests. Production uses pgvector (in-country)."""
+ideal for the demo and tests. Multi-tenant: every read is scoped by tenant_id."""
 from __future__ import annotations
 
 import math
@@ -33,12 +33,13 @@ class InMemoryStore(MemoryStore):
         query_vec: list[float],
         top_k: int,
         *,
+        tenant_id: str,
         lang: str | None = None,
         session_id: str | None = None,
         since: float | None = None,
         until: float | None = None,
     ) -> list[tuple[Segment, float]]:
-        candidates = self._segments
+        candidates = [s for s in self._segments if s.tenant_id == tenant_id]
         if lang is not None:
             candidates = [s for s in candidates if s.lang == lang]
         if session_id is not None:
@@ -51,20 +52,27 @@ class InMemoryStore(MemoryStore):
         scored.sort(key=lambda pair: pair[1], reverse=True)
         return scored[:top_k]
 
-    def list_sessions(self) -> list[Session]:
-        return sorted(self._sessions.values(), key=lambda s: s.created_at, reverse=True)
+    def list_sessions(self, tenant_id: str) -> list[Session]:
+        sessions = [s for s in self._sessions.values() if s.tenant_id == tenant_id]
+        return sorted(sessions, key=lambda s: s.created_at, reverse=True)
 
-    def all_segments(self) -> list[Segment]:
-        return list(self._segments)
+    def all_segments(self, tenant_id: str) -> list[Segment]:
+        return [s for s in self._segments if s.tenant_id == tenant_id]
 
-    def delete_all(self) -> int:
-        n = len(self._segments)
-        self._segments.clear()
-        self._sessions.clear()
-        return n
+    def delete_all(self, tenant_id: str) -> int:
+        removed = sum(1 for s in self._segments if s.tenant_id == tenant_id)
+        self._segments = [s for s in self._segments if s.tenant_id != tenant_id]
+        self._sessions = {sid: s for sid, s in self._sessions.items() if s.tenant_id != tenant_id}
+        return removed
 
-    def delete_session(self, session_id: str) -> int:
+    def delete_session(self, session_id: str, tenant_id: str) -> int:
+        session = self._sessions.get(session_id)
+        if session is None or session.tenant_id != tenant_id:
+            return 0
         before = len(self._segments)
-        self._segments = [s for s in self._segments if s.session_id != session_id]
+        self._segments = [
+            s for s in self._segments
+            if not (s.session_id == session_id and s.tenant_id == tenant_id)
+        ]
         self._sessions.pop(session_id, None)
         return before - len(self._segments)

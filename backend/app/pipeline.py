@@ -1,9 +1,15 @@
 """The thin loop: ingest -> transcribe -> diarize -> chunk -> embed -> store -> ask / brief.
 
+Multi-tenant from task 5 onward — every public method takes a `tenant_id`. Stores are
+shared across tenants but filter on tenant_id; owner enrollment and usage counters are
+per-tenant.
+
 Providers and the store are injected, so the same pipeline runs offline (mock + in-memory)
 for the demo and in production (Yandex/self-hosted STT + pgvector) by changing env only.
 """
 from __future__ import annotations
+
+from pathlib import Path
 
 from .chunking import chunk_text
 from .config import Settings, settings
@@ -11,6 +17,9 @@ from .domain import Segment, Session
 from .owner import OwnerEnrollment
 from .providers import make_diarizer, make_embedding, make_llm, make_stt
 from .store import make_store
+from .usage import UsageMeter
+
+DEFAULT_TENANT = "default"
 
 
 class Pipeline:
@@ -21,31 +30,61 @@ class Pipeline:
         self.llm = make_llm(s)
         self.store = make_store(s, dim=self.embed.dim)
         self.diarizer = make_diarizer(s)
-        self.owner = OwnerEnrollment(
-            path=s.owner_voiceprint_path or None,
-            threshold=s.owner_match_threshold,
-        )
+        self.usage = UsageMeter()
+        # One OwnerEnrollment per tenant — cached lazily on first access.
+        self._owners: dict[str, OwnerEnrollment] = {}
+
+    # ---- per-tenant owner-enrollment ----------------------------------------
+    def owner(self, tenant_id: str = DEFAULT_TENANT) -> OwnerEnrollment:
+        e = self._owners.get(tenant_id)
+        if e is None:
+            e = OwnerEnrollment(
+                path=self._owner_path(tenant_id),
+                threshold=self.settings.owner_match_threshold,
+            )
+            self._owners[tenant_id] = e
+        return e
+
+    def _owner_path(self, tenant_id: str) -> str | None:
+        """Per-tenant persistence path: `<base>.<tenant>.json`. Empty base → in-memory."""
+        base = self.settings.owner_voiceprint_path
+        if not base:
+            return None
+        p = Path(base)
+        # Insert tenant id before the suffix so all tenants live alongside each other but
+        # cannot collide. Plain filename ("owner.json") → "owner.default.json".
+        return str(p.with_name(f"{p.stem}.{tenant_id}{p.suffix or '.json'}"))
 
     # ---- ingest -------------------------------------------------------------
-    def ingest_audio(self, audio: bytes, lang: str, source: str = "upload") -> Session:
+    def ingest_audio(self, audio: bytes, lang: str, source: str = "upload",
+                     tenant_id: str = DEFAULT_TENANT) -> Session:
         stt_segments = self.stt.transcribe(audio, lang)
         if self.diarizer is not None and stt_segments:
-            stt_segments = self._relabel_with_diarizer(stt_segments, audio)
-        return self._store_segments(stt_segments, lang, source)
+            stt_segments = self._relabel_with_diarizer(stt_segments, audio, tenant_id)
+        return self._store_segments(stt_segments, lang, source, tenant_id)
 
-    def _relabel_with_diarizer(self, stt_segments: list[dict], audio: bytes) -> list[dict]:
+    def ingest_text(self, text: str, lang: str, source: str = "text",
+                    speaker: str = "owner", tenant_id: str = DEFAULT_TENANT) -> Session:
+        # Pre-transcribed text path (used by the web demo and tests).
+        stt_like = []
+        t = 0
+        for chunk in chunk_text(text):
+            stt_like.append({"text": chunk, "start_ms": t, "end_ms": t + 6000, "speaker": speaker})
+            t += 6000
+        return self._store_segments(stt_like, lang, source, tenant_id)
+
+    def _relabel_with_diarizer(self, stt_segments: list[dict], audio: bytes,
+                               tenant_id: str) -> list[dict]:
         """Replace each STT segment's speaker with the diarizer's label for the same time
-        window; map diarizer labels to "owner" when an enrolled voiceprint matches.
-
-        STT (e.g. Yandex short-audio) often returns no diarization at all, so we trust
-        the diarizer's own turn boundaries when STT has none. When STT does have its own
-        timing, we attribute each STT segment to the diarizer turn it overlaps most.
+        window; map diarizer labels to "owner" when this tenant's enrolled voiceprint
+        matches.
         """
         turns = self.diarizer.diarize(audio)
         if not turns:
             return stt_segments
 
         # Decide "owner" label per diarizer speaker_label, using the average voiceprint.
+        owner = self.owner(tenant_id)
         label_to_voiceprints: dict[str, list[list[float]]] = {}
         for t in turns:
             label_to_voiceprints.setdefault(t["speaker_label"], []).append(t["voiceprint"])
@@ -54,7 +93,7 @@ class Pipeline:
         other_idx = 0
         for label, vecs in label_to_voiceprints.items():
             centroid = [sum(col) / len(vecs) for col in zip(*vecs)] if vecs else []
-            if self.owner.is_owner(centroid) and not owner_seen:
+            if owner.is_owner(centroid) and not owner_seen:
                 label_name[label] = "owner"
                 owner_seen = True
             else:
@@ -79,17 +118,9 @@ class Pipeline:
             out.append(new)
         return out
 
-    def ingest_text(self, text: str, lang: str, source: str = "text", speaker: str = "owner") -> Session:
-        # Pre-transcribed text path (used by the web demo and tests).
-        stt_like = []
-        t = 0
-        for chunk in chunk_text(text):
-            stt_like.append({"text": chunk, "start_ms": t, "end_ms": t + 6000, "speaker": speaker})
-            t += 6000
-        return self._store_segments(stt_like, lang, source)
-
-    def _store_segments(self, stt_segments: list[dict], lang: str, source: str) -> Session:
-        session = Session(source=source, lang=lang)
+    def _store_segments(self, stt_segments: list[dict], lang: str, source: str,
+                        tenant_id: str) -> Session:
+        session = Session(source=source, lang=lang, tenant_id=tenant_id)
         segments: list[Segment] = []
         for raw in stt_segments:
             for chunk in chunk_text(raw["text"]) or [raw["text"]]:
@@ -100,6 +131,7 @@ class Pipeline:
                     start_ms=raw.get("start_ms", 0),
                     end_ms=raw.get("end_ms", 0),
                     lang=lang,
+                    tenant_id=tenant_id,
                 ))
         if segments:
             vectors = self.embed.embed([s.text for s in segments])
@@ -107,6 +139,7 @@ class Pipeline:
                 seg.embedding = vec
         self.store.add_session(session)
         self.store.add_segments(segments)
+        self.usage.record_ingest(tenant_id, len(segments))
         return session
 
     # ---- recall -------------------------------------------------------------
@@ -115,6 +148,7 @@ class Pipeline:
         question: str,
         lang: str | None = None,
         *,
+        tenant_id: str = DEFAULT_TENANT,
         session_id: str | None = None,
         since: float | None = None,
         until: float | None = None,
@@ -125,34 +159,39 @@ class Pipeline:
         # since RU questions over UZ memories (and vice versa) are common in Tashkent.
         hits = self.store.search(
             query_vec, self.settings.retrieval_top_k,
+            tenant_id=tenant_id,
             session_id=session_id, since=since, until=until,
         )
         context = [{**seg.citation(), "score": round(score, 4)} for seg, score in hits]
         answer = self.llm.answer(question, context, lang)
+        self.usage.record_question(tenant_id)
         return {"question": question, "answer": answer, "citations": context}
 
-    def briefing(self, lang: str | None = None) -> dict:
+    def briefing(self, lang: str | None = None, *, tenant_id: str = DEFAULT_TENANT) -> dict:
         lang = lang or self.settings.default_lang
-        segments = [s.citation() for s in self.store.all_segments()]
+        segments = [s.citation() for s in self.store.all_segments(tenant_id)]
         result = self.llm.summarize_day(segments, lang)
         result["segments_count"] = len(segments)
+        self.usage.record_briefing(tenant_id)
         return result
 
     # ---- privacy ------------------------------------------------------------
-    def delete_all(self) -> int:
-        return self.store.delete_all()
+    def delete_all(self, tenant_id: str = DEFAULT_TENANT) -> int:
+        self.usage.reset(tenant_id)
+        return self.store.delete_all(tenant_id)
 
-    def delete_session(self, session_id: str) -> int:
-        return self.store.delete_session(session_id)
+    def delete_session(self, session_id: str, tenant_id: str = DEFAULT_TENANT) -> int:
+        return self.store.delete_session(session_id, tenant_id)
 
-    def stats(self) -> dict:
+    def stats(self, tenant_id: str = DEFAULT_TENANT) -> dict:
         return {
-            "sessions": len(self.store.list_sessions()),
-            "segments": len(self.store.all_segments()),
+            "sessions": len(self.store.list_sessions(tenant_id)),
+            "segments": len(self.store.all_segments(tenant_id)),
             "providers": {
                 "stt": self.settings.stt_provider,
                 "embed": self.settings.embed_provider,
                 "llm": self.settings.llm_provider,
                 "store": self.settings.store_backend,
+                "diarizer": self.settings.diarizer_provider,
             },
         }
