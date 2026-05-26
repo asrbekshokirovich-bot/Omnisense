@@ -110,10 +110,23 @@ class Pipeline:
         return session
 
     # ---- recall -------------------------------------------------------------
-    def ask(self, question: str, lang: str | None = None) -> dict:
+    def ask(
+        self,
+        question: str,
+        lang: str | None = None,
+        *,
+        session_id: str | None = None,
+        since: float | None = None,
+        until: float | None = None,
+    ) -> dict:
         lang = lang or self.settings.default_lang
         query_vec = self.embed.embed([question])[0]
-        hits = self.store.search(query_vec, self.settings.retrieval_top_k)
+        # `lang` controls the LLM reply language; we do NOT use it as a recall filter,
+        # since RU questions over UZ memories (and vice versa) are common in Tashkent.
+        hits = self.store.search(
+            query_vec, self.settings.retrieval_top_k,
+            session_id=session_id, since=since, until=until,
+        )
         context = [{**seg.citation(), "score": round(score, 4)} for seg, score in hits]
         answer = self.llm.answer(question, context, lang)
         return {"question": question, "answer": answer, "citations": context}
@@ -128,6 +141,9 @@ class Pipeline:
     # ---- privacy ------------------------------------------------------------
     def delete_all(self) -> int:
         return self.store.delete_all()
+
+    def delete_session(self, session_id: str) -> int:
+        return self.store.delete_session(session_id)
 
     def stats(self) -> dict:
         return {

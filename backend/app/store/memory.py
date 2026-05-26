@@ -28,8 +28,26 @@ class InMemoryStore(MemoryStore):
     def add_segments(self, segments: list[Segment]) -> None:
         self._segments.extend(segments)
 
-    def search(self, query_vec: list[float], top_k: int) -> list[tuple[Segment, float]]:
-        scored = [(seg, _cosine(query_vec, seg.embedding)) for seg in self._segments]
+    def search(
+        self,
+        query_vec: list[float],
+        top_k: int,
+        *,
+        lang: str | None = None,
+        session_id: str | None = None,
+        since: float | None = None,
+        until: float | None = None,
+    ) -> list[tuple[Segment, float]]:
+        candidates = self._segments
+        if lang is not None:
+            candidates = [s for s in candidates if s.lang == lang]
+        if session_id is not None:
+            candidates = [s for s in candidates if s.session_id == session_id]
+        if since is not None:
+            candidates = [s for s in candidates if s.created_at >= since]
+        if until is not None:
+            candidates = [s for s in candidates if s.created_at <= until]
+        scored = [(seg, _cosine(query_vec, seg.embedding)) for seg in candidates]
         scored.sort(key=lambda pair: pair[1], reverse=True)
         return scored[:top_k]
 
@@ -44,3 +62,9 @@ class InMemoryStore(MemoryStore):
         self._segments.clear()
         self._sessions.clear()
         return n
+
+    def delete_session(self, session_id: str) -> int:
+        before = len(self._segments)
+        self._segments = [s for s in self._segments if s.session_id != session_id]
+        self._sessions.pop(session_id, None)
+        return before - len(self._segments)

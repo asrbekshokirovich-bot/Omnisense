@@ -50,7 +50,10 @@ async def ingest_audio(file: UploadFile = File(...),
 
 @app.post("/ask", response_model=AskResponse)
 def ask(req: AskRequest) -> AskResponse:
-    return AskResponse(**pipeline.ask(req.question, req.lang))
+    return AskResponse(**pipeline.ask(
+        req.question, req.lang,
+        session_id=req.session_id, since=req.since, until=req.until,
+    ))
 
 
 @app.get("/briefing")
@@ -66,6 +69,12 @@ def sessions() -> dict:
 @app.delete("/data")
 def delete_all() -> dict:
     return {"deleted_segments": pipeline.delete_all()}
+
+
+@app.delete("/sessions/{session_id}")
+def delete_session(session_id: str) -> dict:
+    """Forget one meeting. Returns count of removed segments (0 if unknown id)."""
+    return {"deleted_segments": pipeline.delete_session(session_id), "session_id": session_id}
 
 
 # ---- owner-voice enrollment --------------------------------------------------

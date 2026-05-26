@@ -14,6 +14,11 @@ class IngestTextRequest(BaseModel):
 class AskRequest(BaseModel):
     question: str = Field(..., min_length=1)
     lang: str | None = None
+    # Optional recall filters — narrow to a meeting or a time window without losing the
+    # rest of memory. (lang is intentionally NOT a recall filter; it only steers the reply.)
+    session_id: str | None = None
+    since: float | None = None
+    until: float | None = None
 
 
 class Citation(BaseModel):
