@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Omnisense — Demo Client</title>
+<style>
+  :root{--indigo:#6366f1;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--bg:#f6f7fb;--card:#fff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.5}
+  .wrap{max-width:760px;margin:0 auto;padding:24px 18px 60px}
+  h1{font-size:24px;margin:0 0 2px} .sub{color:var(--muted);font-size:14px;margin:0 0 20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+  .card h2{font-size:15px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+  textarea,input,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;background:#fff}
+  textarea{min-height:90px;resize:vertical}
+  .row{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+  button{background:var(--indigo);color:#fff;border:0;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer}
+  button.ghost{background:#eef2ff;color:var(--indigo)}
+  button:active{transform:translateY(1px)}
+  .out{white-space:pre-wrap;font-size:14px;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px;min-height:24px}
+  .cite{font-size:12.5px;color:var(--muted);border-left:3px solid var(--indigo);padding:4px 0 4px 10px;margin-top:6px}
+  .api{font-size:12px;color:var(--muted)} .api input{display:inline-block;width:auto;padding:4px 8px}
+  label{font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Omnisense — demo client</h1>
+  <p class="sub">A throwaway UI to drive the Phase-0 backend loop. Start the API (<code>uvicorn app.main:app</code>) then use this page.</p>
+
+  <div class="card api">API base: <input id="api" value="http://localhost:8000" /> <span id="status">·</span></div>
+
+  <div class="card">
+    <h2>1 · Ingest a conversation</h2>
+    <textarea id="text" placeholder="Paste a transcript. One line per utterance works best (mock STT alternates speakers)."></textarea>
+    <div class="row">
+      <label>Language</label>
+      <select id="lang"><option value="ru">Russian</option><option value="uz">Uzbek</option><option value="en">English</option></select>
+      <button onclick="ingest()">Remember it</button>
+    </div>
+    <div class="out" id="ingestOut"></div>
+  </div>
+
+  <div class="card">
+    <h2>2 · Ask your memory</h2>
+    <input id="q" placeholder="e.g. when do we ship the demo?" />
+    <div class="row"><button onclick="ask()">Ask</button></div>
+    <div class="out" id="askOut"></div>
+  </div>
+
+  <div class="card">
+    <h2>3 · Morning briefing</h2>
+    <div class="row">
+      <button class="ghost" onclick="brief()">Generate briefing</button>
+      <button class="ghost" onclick="wipe()">Delete all my data</button>
+    </div>
+    <div class="out" id="briefOut"></div>
+  </div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const base = () => $('api').value.replace(/\/$/, '');
+  async function jpost(path, body){const r=await fetch(base()+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return r.json();}
+
+  (async () => { try { const h = await (await fetch(base()+'/health')).json(); $('status').textContent = '✓ ' + h.status + ' · ' + h.segments + ' memories'; } catch(e){ $('status').textContent = '✗ API not reachable'; } })();
+
+  async function ingest(){
+    $('ingestOut').textContent = '…';
+    try{ const r = await jpost('/ingest/text', {text:$('text').value, lang:$('lang').value});
+      $('ingestOut').textContent = 'Stored session '+r.session_id.slice(0,8)+' ('+r.segments+' memories).'; }
+    catch(e){ $('ingestOut').textContent = 'Error: '+e; }
+  }
+  async function ask(){
+    $('askOut').textContent = '…';
+    try{ const r = await jpost('/ask', {question:$('q').value, lang:$('lang').value});
+      let html = r.answer; (r.citations||[]).slice(0,3).forEach(c=>{ html += `\n`; });
+      $('askOut').textContent = r.answer;
+      (r.citations||[]).slice(0,3).forEach(c=>{ const d=document.createElement('div'); d.className='cite'; d.textContent=`[${c.timestamp}] ${c.speaker}: ${c.text}`; $('askOut').appendChild(d); });
+    } catch(e){ $('askOut').textContent = 'Error: '+e; }
+  }
+  async function brief(){
+    $('briefOut').textContent = '…';
+    try{ const r = await (await fetch(base()+'/briefing?lang='+$('lang').value)).json();
+      $('briefOut').textContent = r.summary + '\n\nAction items:\n- ' + (r.action_items||[]).join('\n- '); }
+    catch(e){ $('briefOut').textContent = 'Error: '+e; }
+  }
+  async function wipe(){ const r = await fetch(base()+'/data',{method:'DELETE'}); const j=await r.json(); $('briefOut').textContent = 'Deleted '+j.deleted_segments+' memories.'; }
+</script>
+</body>
+</html>

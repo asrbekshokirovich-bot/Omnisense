@@ -4,8 +4,8 @@
 remembers your life so you can ask it anything later — what was decided in a meeting,
 where you left your keys, or how you fixed something last time.
 
-> Status: **planning / pre-prototype.** This repo currently holds the strategy and
-> research; no application code yet.
+> Status: **Phase 0 in progress.** Strategy + research docs **and** a runnable thin-loop
+> backend (see [`backend/`](backend/)) that works offline with mock providers.
 
 > Launch market: **Uzbekistan.** Model: **hardware at cost + subscription, first 3
 > months free.** Moat: **in-country, fine-tuned Uzbek speech** that Big Tech won't build.
@@ -42,6 +42,24 @@ privacy story and the ~80% gross margin.
 3. **Find-my-things** — "Where did I last see my keys?" *(needs a camera — Phase 2)*
 4. **Show-me-how** — "How did I do this last time?" *(hardest — Phase 3)*
 
+## Code (Phase 0 — the thin loop)
+A runnable skeleton of capture → transcribe → remember → answer → brief. Works **offline**
+(mock providers + in-memory store), swaps to real providers (Yandex STT / LLM) + pgvector
+via env only.
+```bash
+cd backend
+pip install -r requirements.txt
+python demo.py            # see the loop in the terminal
+uvicorn app.main:app --reload   # API on :8000 (open web-demo/index.html to use it)
+python -m pytest -q       # 8 tests, all green
+```
+- [`backend/`](backend/) — FastAPI loop, providers (mock/Yandex/OpenAI), in-memory + pgvector stores, tests.
+- [`ml/`](ml/) — Uzbek/Russian **WER eval harness** (`ml/eval/run_eval.py`) — the Week-1 risk check.
+- [`infra/`](infra/) — `docker-compose` (pgvector + Redis + API).
+- [`mobile/`](mobile/) — Flutter shell (Capture / Ask / Briefing).
+- [`web-demo/`](web-demo/index.html) — a throwaway browser client to drive the API.
+
 ## Next step
-Build the **Phase-0 spike**: record a meeting → transcribe + identify speakers → ask
-questions about it. See the master plan's "Immediate next steps."
+Phase 0 continues: validate **Yandex SpeechKit** Russian + Uzbek accuracy on real audio
+(`OMNI_STT=yandex`, then score with the WER harness), wire real embeddings/LLM, and build
+the morning-briefing UX. See [`docs/development-plan.md`](docs/development-plan.md) §13.
