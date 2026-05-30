@@ -28,58 +28,22 @@ class DimMismatchError(RuntimeError):
 
 
 class PgVectorStore(MemoryStore):
-    def __init__(self, dsn: str, dim: int) -> None:
-        import psycopg  # lazy: only needed on the production path
+    def __init__(self, dsn: str, dim: int, *, connect=None) -> None:
+        """Create / open the store.
+
+        `connect` is an optional override for `psycopg.connect`; production uses the
+        default (psycopg), tests can inject the in-memory fake from
+        `tests.fakes.fake_psycopg` to exercise the store offline.
+        """
+        if connect is None:
+            import psycopg  # lazy: only needed on the production path
+            connect = psycopg.connect
 
         self.dim = dim
-        self.conn = psycopg.connect(dsn, autocommit=True)
-        self._init_schema()
+        self.conn = connect(dsn, autocommit=True)
+        from ._pg_migrations import run_migrations
+        self.applied = run_migrations(self.conn, dim)
         self._guard_dim()
-
-    def _init_schema(self) -> None:
-        with self.conn.cursor() as cur:
-            cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
-            cur.execute(
-                "CREATE TABLE IF NOT EXISTS sessions ("
-                "id TEXT PRIMARY KEY, source TEXT, lang TEXT, tenant_id TEXT NOT NULL "
-                "DEFAULT 'default', created_at DOUBLE PRECISION)"
-            )
-            cur.execute(
-                "CREATE TABLE IF NOT EXISTS segments ("
-                "id TEXT PRIMARY KEY, session_id TEXT, speaker TEXT, text TEXT, lang TEXT, "
-                "tenant_id TEXT NOT NULL DEFAULT 'default', "
-                "start_ms INT, end_ms INT, created_at DOUBLE PRECISION, "
-                f"embedding vector({self.dim}))"
-            )
-            # Idempotent ALTERs for in-place upgrades from pre-task-5 schemas.
-            cur.execute(
-                "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS tenant_id TEXT NOT NULL "
-                "DEFAULT 'default'"
-            )
-            cur.execute(
-                "ALTER TABLE segments ADD COLUMN IF NOT EXISTS tenant_id TEXT NOT NULL "
-                "DEFAULT 'default'"
-            )
-            cur.execute(
-                "CREATE INDEX IF NOT EXISTS segments_embedding_idx "
-                "ON segments USING hnsw (embedding vector_cosine_ops)"
-            )
-            # Cheap indexes for the metadata filters in search(). Tenant is on every read.
-            cur.execute(
-                "CREATE INDEX IF NOT EXISTS segments_tenant_idx ON segments (tenant_id)"
-            )
-            cur.execute(
-                "CREATE INDEX IF NOT EXISTS segments_session_idx ON segments (session_id)"
-            )
-            cur.execute(
-                "CREATE INDEX IF NOT EXISTS segments_lang_idx ON segments (lang)"
-            )
-            cur.execute(
-                "CREATE INDEX IF NOT EXISTS segments_created_idx ON segments (created_at)"
-            )
-            cur.execute(
-                "CREATE INDEX IF NOT EXISTS sessions_tenant_idx ON sessions (tenant_id)"
-            )
 
     def _guard_dim(self) -> None:
         """If the table existed before we added the extension, the embedding column may
