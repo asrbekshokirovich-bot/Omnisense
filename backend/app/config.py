@@ -61,6 +61,10 @@ class Settings:
     # contracts). See app/billing.py + app/providers/billing_*.py.
     billing_provider: str = _env("OMNI_BILLING", "mock")  # mock | payme | click
 
+    # Rate limiting (per-tenant token bucket; in-memory in Phase 0).
+    rate_per_min: float = float(_env("OMNI_RATE_PER_MIN", "60"))
+    rate_burst: float = float(_env("OMNI_RATE_BURST", "10"))
+
     # Pyannote (when OMNI_DIARIZER=pyannote) — runtime needs the HF gated-model token.
     hf_token: str = _env("HF_TOKEN") or _env("HUGGING_FACE_HUB_TOKEN")
     diarizer_device: str = _env("OMNI_DIARIZER_DEVICE", "cpu")

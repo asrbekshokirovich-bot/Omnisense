@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .auth import ApiKeyStore
 from .billing import SubscriptionStore, make_billing
 from .chunking import chunk_text
 from .config import Settings, settings
@@ -18,6 +19,7 @@ from .consent import ConsentLog
 from .domain import Segment, Session
 from .owner import OwnerEnrollment
 from .providers import make_diarizer, make_embedding, make_llm, make_stt
+from .ratelimit import TokenBucketLimiter
 from .store import make_store
 from .usage import UsageMeter
 
@@ -51,6 +53,10 @@ class Pipeline:
         self.usage = UsageMeter()
         self.subscriptions = SubscriptionStore()
         self.billing = make_billing(s)
+        self.api_keys = ApiKeyStore()
+        self.rate_limiter = TokenBucketLimiter(
+            rate_per_min=s.rate_per_min, burst=s.rate_burst,
+        )
         # One OwnerEnrollment + one ConsentLog per tenant — cached lazily.
         self._owners: dict[str, OwnerEnrollment] = {}
         self._consent: dict[str, ConsentLog] = {}
