@@ -10,6 +10,13 @@
 shelf hardware → funded build; **Uzbekistan** (Uzbek + Russian, budget Android, data
 localization); **conversation memory (Pillar 1)** first; cheap audio pendant.
 
+> **Phase 0 status:** the thin loop + most Phase-0 hardening is shipped on branch
+> `claude/great-ptolemy-Nbfax` (see [§13](#13-phased-delivery-plan) for the full
+> done-vs-remaining map, and the **PR description** for the test counts).
+> The data-residency map for ZRU-547 lives at [`data-residency.md`](./data-residency.md);
+> the Phase-1 mobile background-capture plan at
+> [`mobile-background-capture.md`](./mobile-background-capture.md).
+
 ---
 
 ## 0. Engineering principles
@@ -123,22 +130,29 @@ secrets via environment/secret manager (never in code), semantic versioning for 
 
 ## 5. The pipeline (component detail)
 
-1. **Capture** — app records on demand (default-off); **Silero VAD** drops silence;
-   audio chunked (e.g., 30–60s) and uploaded over TLS. (Pendant streams over BLE → phone
-   → backend.)
+1. **Capture** — app records on demand (default-off ✅); **Silero VAD** drops silence
+   (Phase 1 — plan: [`mobile-background-capture.md`](./mobile-background-capture.md));
+   audio chunked (e.g., 30–60s) and uploaded over TLS. (Pendant streams over BLE →
+   phone → backend.)
 2. **Ingest** — backend stores raw audio (in-country), enqueues a processing job.
-3. **Transcribe** — STT service (cloud Yandex now / self-hosted Whisper later) →
-   timestamped text in RU/UZ.
-4. **Diarize** — pyannote labels speakers; **owner enrolled via voiceprint** (kept
-   in-country) so "you" vs "others" is reliable; users can correct labels.
-5. **Index** — chunk transcript → **BGE-M3 embeddings** → pgvector with metadata (time,
-   speaker, session, language). Hybrid retrieval (vector + keyword) for names/exact terms.
-6. **Distill (phase 1+)** — extract entities, decisions, commitments into a lightweight
-   **knowledge graph** (Graphiti) for "what did I commit to / what changed."
+   *Phase 0 ships synchronous ingest; the async queue lands in Phase 1.*
+3. **Transcribe** — STT service (cloud Yandex now ✅ short+long path / self-hosted
+   Whisper later) → timestamped text in RU/UZ.
+4. **Diarize** — pyannote ✅ labels speakers; **owner enrolled via voiceprint** ✅
+   (per-tenant centroid, kept in-country) so "you" vs "others" is reliable; users can
+   correct labels.
+5. **Index** — chunk transcript → **BGE-M3 embeddings** ✅ → pgvector ✅ with metadata
+   (time, speaker, session, language, tenant). Hybrid retrieval (vector + keyword) for
+   names/exact terms is Phase 1.
+6. **Distill** — extract entities, decisions, commitments into a lightweight
+   **knowledge graph** ✅ (rule-based mock now; Graphiti/Mem0 stubs ready, see §16) for
+   "what did I commit to / what changed."
 7. **Answer** — user question → retrieve top-k chunks/facts → **LLM** answers **in the
-   user's language with citations** (timestamp + speaker).
+   user's language with citations** (timestamp + speaker) ✅. Region-gated: a tenant
+   without `cross_border_llm` consent gets HTTP 451 instead of a silent network call ✅.
 8. **Brief** — scheduled job summarizes the day: decisions, action items, key quotes →
-   morning push.
+   morning push. *Phase 0 ships the on-demand `/briefing` endpoint; the scheduled push
+   is Phase 1.*
 
 Latency target: recall answers < ~2s; transcription/briefing are async (acceptable to
 process after the meeting).
@@ -184,37 +198,64 @@ model beating baseline; M2/M3 — in-country serving in production, cloud as fal
 
 ## 8. Backend & APIs
 
-- **FastAPI** services: auth, ingestion, processing orchestration (Celery), memory/RAG,
-  briefing, account/billing.
-- **API:** REST/JSON (+ websockets for live transcription later). Versioned.
-- **Multi-tenant** from the start (per-user isolation); rate limits; usage metering
-  (for tier caps + cost tracking).
-- **Storage lifecycle:** raw audio short-retention + purge policy; transcripts/memory
-  retained per user setting; hard-delete cascade on request.
+- **FastAPI** ✅ services: auth (X-API-Key + per-tenant key store ✅), ingestion ✅,
+  RAG ✅, briefing ✅, account/billing ✅ (skeleton). Processing orchestration via
+  Celery / Redis is Phase 1 (Redis is in `infra/docker-compose.yml` and waiting).
+- **API:** REST/JSON ✅. Every request carries `X-Request-Id` (generated if absent) for
+  log correlation ✅. Versioning is Phase 1.
+- **Multi-tenant** from the start ✅ — `X-User-Id` dev shortcut + `X-API-Key`
+  precedence; every store read takes `tenant_id`; cross-tenant operations are no-ops.
+  **Per-tenant token-bucket rate limiter** ✅ (in-memory in Phase 0; Redis-backed in
+  Phase 1). Per-tenant **usage metering** ✅ (segments / questions / briefings).
+- **Storage lifecycle:** raw audio short-retention + purge policy (Phase 1);
+  transcripts/memory retained per user setting; **hard-delete cascade on request** ✅
+  (`DELETE /data`, `DELETE /sessions/{id}` — bypass the rate limiter so "delete me"
+  never waits).
 
 ---
 
 ## 9. Privacy & security engineering (non-negotiable)
 
-- **Encryption:** TLS in transit; AES-256 at rest (DB + object storage); per-user keys
-  where feasible; access gated by device auth.
-- **Data residency:** voice/voiceprints/STT in-country; **register the database** with
-  the State Personalization Center; cross-border *text* only with consent + safeguards.
-- **Consent:** explicit user consent; recording indicator; capped/tap-to-record default;
-  a defensible bystander stance (owner-voice gating); consent log.
-- **Deletion/export:** one-tap delete (cascade across audio, transcripts, embeddings,
-  graph); data export.
-- **Secrets:** secret manager / env; no keys in the app or repo; rotate; audit logging.
-- **Pen-test/readiness** before public launch; incident-response plan.
+- **Encryption:** TLS in transit (FastAPI); **app-level Fernet AEAD at rest** ✅ on
+  segment text — per-tenant DEK derived from a server KEK via HKDF-SHA256, so restarts
+  don't lose access and the KEK is the only secret that needs persistence. Production
+  reads the KEK from Vault / KMS; `OMNI_KEK` env is the dev path. (Encrypting voiceprint
+  files at rest is wired into the same Encryptor interface — Phase 1 enables it.)
+  Disk-level encryption + Postgres at-rest remain the team's hosting decision.
+- **Data residency:** full map at [`data-residency.md`](./data-residency.md). Voice +
+  voiceprints + STT stay in-country ✅; the **region gate** ✅ refuses cross-border LLM
+  or STT calls with HTTP 451 if the tenant has not granted the matching consent scope
+  (`cross_border_llm`, `cross_border_stt`). **Register the database** with the State
+  Personalization Center is the team's task once Phase-1 hosting is in Tashkent.
+- **Consent:** **explicit user consent** ✅ (mobile consent gate on first launch); **a
+  visible recording indicator** ✅ (red pulse, only while mic is hot); capped /
+  tap-to-record default ✅; defensible bystander stance via owner-voice gating ✅; **per-
+  tenant append-only consent log** ✅ at `GET /consent` — the regulator-facing artifact
+  for ZRU-547.
+- **Deletion / export:** **one-tap delete** ✅ (`DELETE /data` cascades across segments,
+  sessions, owner voiceprint, consent log, usage counters, KG facts). Data export is
+  Phase 1.
+- **Secrets:** secret manager / env; no keys in the app or repo ✅ (`.env` is gitignored
+  + auto-loaded at import time). Rotate; audit logging (Phase 1, when structured logs
+  ship alongside the request-id middleware).
+- **Pen-test / readiness** before public launch; incident-response plan.
 
 ---
 
 ## 10. Billing & payments (post-demo, Phase 1–2)
 
-- Integrate **Payme + Click** recurring (via PayTechUZ); **carrier billing** + **BNPL
-  (Uzum/Click)** for the device.
-- Subscription engine: tiers (Free/Personal/Pro/Business), **annual prepay**, **3-month
-  free trial with card-on-file auto-convert**, usage caps per tier, dunning.
+- **Skeleton shipped** ✅: `app/billing.py` defines a Subscription model + 90-day
+  trial + plan catalog (Personal / Pro / Business with monthly + annual lines, prices
+  in centsom). REST surface: `GET /billing`, `POST /billing/start-trial`,
+  `POST /billing/subscribe`, `POST /billing/webhook/{provider}`. `MockBilling` runs the
+  flow end-to-end offline.
+- **Payme + Click adapter stubs** ✅ — they raise `NotImplementedError` on construction
+  (the same fail-loud pattern as the KG adapter stubs), so a misconfigured
+  `OMNI_BILLING=payme` deploy can't silently no-op. Bodies fill in once the team has
+  the merchant contract + the webhook secrets. Same interface — no call-site changes
+  when the real adapters land.
+- **Carrier billing** + **BNPL (Uzum/Click)** for the device: Phase 1, after the
+  hardware is real.
 
 ---
 
@@ -243,16 +284,33 @@ model beating baseline; M2/M3 — in-country serving in production, cloud as fal
 
 ### Phase 0 — Demo (≈4 weeks, existing team, off-the-shelf HW)
 Engineering view of [`demo-sprint.md`](./demo-sprint.md):
-- **Week 1:** project skeleton (mobile + FastAPI + Postgres/pgvector + Redis); capture →
-  upload → **Yandex SpeechKit STT** → transcript; **validate RU + UZ accuracy** on real
-  audio (critical risk).
-- **Week 2:** chunk + **BGE-M3 embeddings** → pgvector; **ask** flow with LLM RAG answers
-  + citations in RU/UZ; basic diarization + owner enrollment.
-- **Week 3:** **daily briefing** (decisions/action items); minimal Flutter UI (timeline,
-  ask, briefing); privacy basics (encrypt, delete, default-off, indicator).
-- **Week 4:** reliability + accuracy pass (diarization, UZ/RU); put it on the investor;
-  instrument usage; prep pitch + metrics view.
-- **Done =** investor uses it on real meetings and won't give it back.
+- **Week 1:** project skeleton (mobile + FastAPI + Postgres/pgvector + Redis) ✅;
+  capture → upload → **Yandex SpeechKit STT** ✅ adapter + long-audio async path →
+  transcript; **validate RU + UZ accuracy** on real audio — *deferred pending the
+  Yandex / Anthropic keys.* The WER/CER eval harness (`ml/eval/`) is ready to score
+  it ✅.
+- **Week 2:** chunk + **BGE-M3 embeddings** ✅ (local + OpenAI-compatible adapters
+  behind one interface) → **pgvector** ✅ (first-class: dim guard, migrations, tenant
+  filter, metadata indexes); **ask** flow with LLM RAG answers + citations in RU/UZ ✅;
+  diarization + owner enrollment via pyannote ✅.
+- **Week 3:** **`/briefing`** ✅ (on-demand; scheduled push is Phase 1); minimal Flutter
+  UI ✅ (Capture / Ask / Briefing / Settings, with consent gate + recording indicator);
+  privacy basics ✅ (encryption at rest, one-tap delete, default-off, indicator).
+- **Week 4:** reliability + accuracy pass — *paused on real audio*. **Hardening shipped
+  ahead of schedule:** multi-tenancy + per-tenant rate limit + X-Request-Id + API keys,
+  consent log + region gate (HTTP 451), billing skeleton with Payme/Click stubs,
+  KG-memory scaffold. Backend test suite: **119 passed, 1 skipped** (Postgres
+  integration; offline psycopg fake covers the SQL shape).
+
+**What is NOT yet done in Phase 0:**
+- Live Russian + Uzbek transcription on real audio (needs `YANDEX_API_KEY`).
+- Live Claude answer/briefing verification through the consent gate (needs
+  `ANTHROPIC_API_KEY`).
+- Flutter `flutter analyze` / `flutter test` on the mobile changes (needs the SDK).
+- Real pgvector integration test (needs Docker / Postgres in the test env).
+- Real Payme / Click adapters, real Graphiti / Mem0 backend — all stubbed.
+
+**Done =** investor uses it on real meetings and won't give it back.
 
 ### Phase 1 — Production v1 + private beta (0–6 months post-raise)
 Real in-country infra; auth; multi-tenant; storage lifecycle; **IT Park residency + DB
@@ -299,12 +357,24 @@ metrics or break-even.
 
 ## 16. Immediate next actions
 
-1. **Stand up the repo skeleton** (`/mobile`, `/backend`, `/ml`, `/infra`) + CI.
-2. **Get a Yandex SpeechKit key** and run a **RU + UZ transcription accuracy spike** on
-   real recordings — the single most important Week-1 risk check.
-3. **Wire the thin loop:** record → STT → store → embed → ask (LLM) → answer with citation.
-4. **Decide demo hardware:** Omi pendant vs phone + clip mic.
-5. **Set privacy defaults** (encrypt, default-off, delete) in the skeleton now.
+Items 1, 3, and 5 from the original list are **done** ✅. What's actually next:
 
-> Say the word and I can scaffold the repo (`/backend` FastAPI + pgvector, `/mobile`
-> Flutter shell, `/ml` eval-harness stub) and the thin end-to-end loop to kick off Week 1.
+1. **Provision keys.** `YANDEX_API_KEY` + `ANTHROPIC_API_KEY` in `backend/.env` →
+   immediately unlocks (a) the Yandex RU + UZ accuracy spike via `ml/eval/run_eval.py`,
+   and (b) live Claude answer/briefing through the consent gate.
+2. **Bring up the docker-compose stack** (`infra/docker-compose.yml`) → unlocks the
+   real-Postgres integration test (`backend/tests/test_pgvector.py`) and the persistent
+   demo path.
+3. **Decide demo hardware:** Omi pendant vs phone + clip mic.
+4. **Pick the KG backend** (Graphiti on Neo4j, or Mem0). Both have residency
+   implications different from pgvector — pin the choice before Phase 1 wires the
+   adapter. The Phase-0 mock covers RU/UZ/EN meeting patterns and is good enough for
+   the investor demo's KG slice.
+5. **Phase 1 background capture** (`mobile-background-capture.md`) — needs the team
+   to start on the Android foreground service + Silero VAD work. The Phase-0 mobile
+   shell already ships the consent surfaces that gate it.
+6. **Sign the merchant contracts** (Payme + Click) → fill the adapter stubs at
+   `backend/app/providers/billing_payme.py` + `billing_click.py`.
+
+> The Phase-0 skeleton + thin loop + most hardening are already on the branch — see
+> the **PR #1 description** for the file-level map.
