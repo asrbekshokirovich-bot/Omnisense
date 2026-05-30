@@ -65,6 +65,10 @@ class Settings:
     rate_per_min: float = float(_env("OMNI_RATE_PER_MIN", "60"))
     rate_burst: float = float(_env("OMNI_RATE_BURST", "10"))
 
+    # Encryption at rest (mock = passthrough; fernet = real, see app/encryption.py).
+    encryption: str = _env("OMNI_ENCRYPTION", "mock")  # mock | fernet
+    kek_b64: str = _env("OMNI_KEK", "")  # urlsafe-b64 32 bytes; required for fernet
+
     # Pyannote (when OMNI_DIARIZER=pyannote) — runtime needs the HF gated-model token.
     hf_token: str = _env("HF_TOKEN") or _env("HUGGING_FACE_HUB_TOKEN")
     diarizer_device: str = _env("OMNI_DIARIZER_DEVICE", "cpu")

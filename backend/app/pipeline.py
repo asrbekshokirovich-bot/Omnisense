@@ -17,6 +17,7 @@ from .chunking import chunk_text
 from .config import Settings, settings
 from .consent import ConsentLog
 from .domain import Segment, Session
+from .encryption import make_encryptor
 from .owner import OwnerEnrollment
 from .providers import make_diarizer, make_embedding, make_llm, make_stt
 from .ratelimit import TokenBucketLimiter
@@ -57,6 +58,7 @@ class Pipeline:
         self.rate_limiter = TokenBucketLimiter(
             rate_per_min=s.rate_per_min, burst=s.rate_burst,
         )
+        self.encryptor = make_encryptor(s.encryption, s.kek_b64)
         # One OwnerEnrollment + one ConsentLog per tenant — cached lazily.
         self._owners: dict[str, OwnerEnrollment] = {}
         self._consent: dict[str, ConsentLog] = {}
@@ -188,13 +190,23 @@ class Pipeline:
                     tenant_id=tenant_id,
                 ))
         if segments:
+            # Embed plaintext first — the embedder needs to see real text. Encryption
+            # happens just before the segment lands in the store, so the embeddings
+            # (computed in-country) and the at-rest ciphertext are both correct.
             vectors = self.embed.embed([s.text for s in segments])
             for seg, vec in zip(segments, vectors):
                 seg.embedding = vec
+                seg.text = self.encryptor.encrypt(seg.text, tenant_id)
         self.store.add_session(session)
         self.store.add_segments(segments)
         self.usage.record_ingest(tenant_id, len(segments))
         return session
+
+    def _decrypt_segment(self, seg: Segment) -> Segment:
+        """Return a copy of `seg` with text decrypted. Original is left intact (so
+        callers that need the at-rest form still see it)."""
+        from dataclasses import replace
+        return replace(seg, text=self.encryptor.decrypt(seg.text, seg.tenant_id))
 
     # ---- recall -------------------------------------------------------------
     def ask(
@@ -217,7 +229,10 @@ class Pipeline:
             tenant_id=tenant_id,
             session_id=session_id, since=since, until=until,
         )
-        context = [{**seg.citation(), "score": round(score, 4)} for seg, score in hits]
+        context = [
+            {**self._decrypt_segment(seg).citation(), "score": round(score, 4)}
+            for seg, score in hits
+        ]
         answer = self.llm.answer(question, context, lang)
         self.usage.record_question(tenant_id)
         return {"question": question, "answer": answer, "citations": context}
@@ -225,7 +240,10 @@ class Pipeline:
     def briefing(self, lang: str | None = None, *, tenant_id: str = DEFAULT_TENANT) -> dict:
         self._require_consent_for_llm(tenant_id)
         lang = lang or self.settings.default_lang
-        segments = [s.citation() for s in self.store.all_segments(tenant_id)]
+        segments = [
+            self._decrypt_segment(s).citation()
+            for s in self.store.all_segments(tenant_id)
+        ]
         result = self.llm.summarize_day(segments, lang)
         result["segments_count"] = len(segments)
         self.usage.record_briefing(tenant_id)
