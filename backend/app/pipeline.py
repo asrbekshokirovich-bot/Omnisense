@@ -18,6 +18,7 @@ from .config import Settings, settings
 from .consent import ConsentLog
 from .domain import Segment, Session
 from .encryption import make_encryptor
+from .kg import make_kg
 from .owner import OwnerEnrollment
 from .providers import make_diarizer, make_embedding, make_llm, make_stt
 from .ratelimit import TokenBucketLimiter
@@ -59,6 +60,7 @@ class Pipeline:
             rate_per_min=s.rate_per_min, burst=s.rate_burst,
         )
         self.encryptor = make_encryptor(s.encryption, s.kek_b64)
+        self.kg = make_kg(s.kg_provider)
         # One OwnerEnrollment + one ConsentLog per tenant — cached lazily.
         self._owners: dict[str, OwnerEnrollment] = {}
         self._consent: dict[str, ConsentLog] = {}
@@ -192,10 +194,16 @@ class Pipeline:
         if segments:
             # Embed plaintext first — the embedder needs to see real text. Encryption
             # happens just before the segment lands in the store, so the embeddings
-            # (computed in-country) and the at-rest ciphertext are both correct.
+            # (computed in-country) and the at-rest ciphertext are both correct. The
+            # KG extractor also runs on plaintext (entities/relations are word-level).
             vectors = self.embed.embed([s.text for s in segments])
             for seg, vec in zip(segments, vectors):
                 seg.embedding = vec
+                if self.kg is not None:
+                    self.kg.extract_facts(
+                        seg.text, segment_id=seg.id,
+                        session_id=session.id, tenant_id=tenant_id,
+                    )
                 seg.text = self.encryptor.encrypt(seg.text, tenant_id)
         self.store.add_session(session)
         self.store.add_segments(segments)
@@ -252,9 +260,13 @@ class Pipeline:
     # ---- privacy ------------------------------------------------------------
     def delete_all(self, tenant_id: str = DEFAULT_TENANT) -> int:
         self.usage.reset(tenant_id)
+        if self.kg is not None:
+            self.kg.delete_all(tenant_id=tenant_id)
         return self.store.delete_all(tenant_id)
 
     def delete_session(self, session_id: str, tenant_id: str = DEFAULT_TENANT) -> int:
+        if self.kg is not None:
+            self.kg.delete_session(session_id, tenant_id=tenant_id)
         return self.store.delete_session(session_id, tenant_id)
 
     def stats(self, tenant_id: str = DEFAULT_TENANT) -> dict:

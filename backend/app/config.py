@@ -69,6 +69,10 @@ class Settings:
     encryption: str = _env("OMNI_ENCRYPTION", "mock")  # mock | fernet
     kek_b64: str = _env("OMNI_KEK", "")  # urlsafe-b64 32 bytes; required for fernet
 
+    # Knowledge-graph memory (off | mock | graphiti | mem0). Default off keeps the
+    # offline demo + tests unchanged. See app/kg.py.
+    kg_provider: str = _env("OMNI_KG", "off")
+
     # Pyannote (when OMNI_DIARIZER=pyannote) — runtime needs the HF gated-model token.
     hf_token: str = _env("HF_TOKEN") or _env("HUGGING_FACE_HUB_TOKEN")
     diarizer_device: str = _env("OMNI_DIARIZER_DEVICE", "cpu")

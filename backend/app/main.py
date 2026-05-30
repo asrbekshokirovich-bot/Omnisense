@@ -196,6 +196,25 @@ def usage(tid: str = Depends(resolve_tenant)) -> dict:
     return pipeline.usage.get(tid)
 
 
+# ---- knowledge-graph memory --------------------------------------------------
+@app.get("/facts")
+def facts_search(q: str = "", top_k: int = 10,
+                 tid: str = Depends(rate_limit)) -> dict:
+    """Structured-memory search — entities + relations + temporal markers extracted
+    from your transcripts. Sits alongside the vector store; covers queries like
+    'what did I commit to about the demo?' that semantic search blurs."""
+    if pipeline.kg is None:
+        return {"provider": "off", "facts": []}
+    if q:
+        results = pipeline.kg.search_facts(q, tenant_id=tid, top_k=top_k)
+    else:
+        results = pipeline.kg.list_facts(tenant_id=tid)[:top_k]
+    return {
+        "provider": pipeline.kg.name,
+        "facts": [f.to_dict() for f in results],
+    }
+
+
 # ---- consent + region gating -------------------------------------------------
 @app.get("/consent")
 def consent_status(tid: str = Depends(resolve_tenant)) -> dict:
