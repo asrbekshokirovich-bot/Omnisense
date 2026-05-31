@@ -75,3 +75,20 @@ the *categories* of data, not specific tables, so a missed entry here is the gap
 4. **Keep `cross_border_llm` opt-in** — the LLM call is the only data path that
    crosses the border in steady state. Users that say "no" still get the mock LLM
    summarizer (or the local-LLM path, when it exists).
+
+## Adjacent surveillance vectors
+
+The categories above describe data Omnisense *creates and stores*. They do not
+address data the environment *generates about the user* independently of Omnisense.
+The most relevant adjacent vector today is **Wi-Fi sensing** — the 2025 KIT/KASTEL
+work and the IEEE 802.11bf standard showed that the unencrypted Beam-Forming
+Feedback (BFI) emitted by every modern router can be turned into a per-person RF
+gait signature with seconds of observation. See
+[`docs/wifi-sensing-research.md`](wifi-sensing-research.md) for the full report,
+threat model, and Phase-3 pilot plan. The honest framing for Omnisense's privacy
+positioning: Omnisense does not capture audio without your consent, but your
+physical presence is detectable by other systems regardless of what Omnisense does,
+and "your voice data stays in Uzbekistan" does not guarantee that your RF identity
+isn't already in a foreign cloud dataset gathered by some hotel or airport router.
+We track this category but do not yet defend against it; the C1 ("RF-surveillance
+detection") tier in the research doc is the defensive feature we may build later.

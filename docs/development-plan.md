@@ -378,3 +378,25 @@ Items 1, 3, and 5 from the original list are **done** ✅. What's actually next:
 
 > The Phase-0 skeleton + thin loop + most hardening are already on the branch — see
 > the **PR #1 description** for the file-level map.
+
+---
+
+## 17. Tracked adjacent technologies
+
+Technologies that are not on the Phase-0/1/2 build path but that we deliberately
+watch because they would change either the product surface or the privacy threat
+model materially.
+
+- **Wi-Fi / RF sensing.** The KIT/KASTEL 2025 result (99.8% identification of 197
+  enrolled subjects from unencrypted Beam-Forming Feedback) plus the finalized
+  IEEE 802.11bf sensing standard make passive RF identification a real adjacent
+  vector — both as a feature opportunity (auto-trigger capture, diarization
+  ground-truth, "who else is here") and as a privacy threat we cannot patch with
+  software. **Phase-3 pilot, conditional on 802.11bf-capable consumer routers
+  reaching ~5% installed base** (estimated 2027–2028). The full report — feature
+  tiers A1–A3, adjacent products B1/B2, defensive feature C1, technical
+  feasibility table, source material — lives at
+  [`docs/wifi-sensing-research.md`](wifi-sensing-research.md). One concrete
+  Phase-0 action documented there: park 5× ESP32-S3-DevKitC ($75 total, AliExpress
+  to Tashkent) so the pilot is hardware-ready when engineer-quarter capacity
+  opens. Re-review at end of Q1 2027.
